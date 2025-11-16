@@ -1,11 +1,15 @@
 
-
-  {
-    "buildCommand": "npm run build",
-  "outputDirectory": "dist",
+{
   "version": 2,
+
+  "outputDirectory": "dist",
+  "framework": "vite",
   "routes": [
-    { "src": "/api/(.*)", "dest": "/api" }
+    {
+      "src": "/(.*)",
+      "dest": "/index.html"
+    }
   ]
 }
+
 
