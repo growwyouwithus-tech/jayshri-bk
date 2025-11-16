@@ -8,7 +8,7 @@ const router = express.Router();
 // @desc    Get all cities (Public for user app)
 // @route   GET /api/v1/cities
 // @access  Public
-router.get('/', protect, async (req, res) => {
+router.get('/', async (req, res) => {
   try {
     const { search, state } = req.query;
     

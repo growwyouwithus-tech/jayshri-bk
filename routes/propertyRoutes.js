@@ -138,6 +138,8 @@ router.post(
     try {
       const facilities = parseArrayField(req.body.facilities)
       const amenities = parseArrayField(req.body.amenities)
+      const roads = parseArrayField(req.body.roads)
+      const parks = parseArrayField(req.body.parks)
 
       const propertyData = {
         name: req.body.name,
@@ -150,6 +152,8 @@ router.post(
         description: req.body.description,
         facilities,
         amenities,
+        roads,
+        parks,
         media: buildMediaPayload(req.files, { moreImages: [] }),
         createdBy: req.user._id
       }
@@ -198,6 +202,12 @@ router.put(
       }
       if (req.body.amenities) {
         property.amenities = parseArrayField(req.body.amenities)
+      }
+      if (req.body.roads) {
+        property.roads = parseArrayField(req.body.roads)
+      }
+      if (req.body.parks) {
+        property.parks = parseArrayField(req.body.parks)
       }
 
       if (req.files && Object.keys(req.files).length > 0) {

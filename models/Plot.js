@@ -33,6 +33,11 @@ const plotSchema = new mongoose.Schema({
     enum: ['available', 'blocked', 'sold', 'reserved'],
     default: 'available'
   },
+  ownerType: {
+    type: String,
+    enum: ['seller', 'owner'],
+    default: 'owner'
+  },
   corner: {
     type: Boolean,
     default: false

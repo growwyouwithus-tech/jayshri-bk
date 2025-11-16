@@ -52,6 +52,16 @@ const propertySchema = new mongoose.Schema({
   amenities: [{
     type: String
   }],
+  roads: [{
+    name: String,
+    lengthFt: Number,
+    widthFt: Number
+  }],
+  parks: [{
+    name: String,
+    lengthFt: Number,
+    widthFt: Number
+  }],
   media: {
     type: mediaSchema,
     default: () => ({ moreImages: [] })
