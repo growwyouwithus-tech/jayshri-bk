@@ -8,9 +8,14 @@
     "dev": "nodemon server.js",
     "init-db": "node scripts/initDatabase.js",
     "seed": "node scripts/seedDatabase.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "keywords": ["colony", "management", "real-estate", "api"],
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "npm run build"
+
+
+
+
+ },
+"keywords": ["colony", "management", "real-estate", "api"],
   "author": "Jaishree Group",
   "license": "ISC",
   "dependencies": {
