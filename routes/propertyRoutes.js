@@ -8,7 +8,11 @@ const { protect, authorize } = require('../middleware/auth')
 
 const router = express.Router()
 
-const mediaUploadDir = path.join(__dirname, '../uploads/properties')
+const mediaUploadDir =
+  process.env.NODE_ENV === 'production'
+    ? path.join('/tmp', 'uploads', 'properties')
+    : path.join(__dirname, '../uploads/properties');
+
 if (!fs.existsSync(mediaUploadDir)) {
   fs.mkdirSync(mediaUploadDir, { recursive: true })
 }

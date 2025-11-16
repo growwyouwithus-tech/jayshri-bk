@@ -53,7 +53,7 @@ const connectDB = async () => {
         serverSelectionTimeoutMS: 5000,
       });
       console.log(`✅ MongoDB Connected: ${conn.connection.host}`);
-      console.log(`📊 Database: ${conn.connection.db.databaseName}`);
+      console.log(`📊 Database: ${conn.connection.name}`);
       return;
     } catch (error) {
       retries -= 1;
