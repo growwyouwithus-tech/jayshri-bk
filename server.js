@@ -52,8 +52,12 @@ const connectDB = async () => {
         useUnifiedTopology: true,
         serverSelectionTimeoutMS: 5000,
       });
-      console.log(`✅ MongoDB Connected: ${conn.connection.host}`);
-      console.log(`📊 Database: ${conn.connection.name}`);
+      // `mongoose.connect()` resolves to the `mongoose` instance in v6/v7, so we
+      // should read the details from `mongoose.connection` instead of the return
+      // value. This also works reliably across standalone and Atlas clusters.
+      const { host, port, name: dbName } = mongoose.connection;
+      console.log(`✅ MongoDB Connected: ${host ?? 'unknown'}${port ? ':' + port : ''}`);
+      console.log(`📊 Database: ${dbName ?? 'unknown'}`);
       return;
     } catch (error) {
       retries -= 1;

@@ -8,13 +8,27 @@ const { protect, authorize } = require('../middleware/auth')
 
 const router = express.Router()
 
-const mediaUploadDir =
-  process.env.NODE_ENV === 'production'
-    ? path.join('/tmp', 'uploads', 'properties')
-    : path.join(__dirname, '../uploads/properties');
+// Determine a writable upload directory based on the runtime environment
+// In serverless platforms (e.g., Vercel / Netlify / AWS Lambda) the default working
+// directory is read-only. Only the /tmp directory is writable. We detect such
+// environments via common environment variables and always fall back to /tmp to
+// avoid ENOENT errors when attempting to create folders inside the read-only
+// function bundle path ("/var/task").
+const isServerless = Boolean(process.env.VERCEL || process.env.AWS_REGION || process.env.LAMBDA_TASK_ROOT)
 
-if (!fs.existsSync(mediaUploadDir)) {
-  fs.mkdirSync(mediaUploadDir, { recursive: true })
+const mediaUploadDir = isServerless
+  ? path.join('/tmp', 'uploads', 'properties')
+  : path.join(__dirname, '../uploads/properties');
+
+// Ensure the directory exists (and is writable). Wrap in try/catch so that the
+// app still boots even if the directory cannot be created in a read-only
+// environment.
+try {
+  if (!fs.existsSync(mediaUploadDir)) {
+    fs.mkdirSync(mediaUploadDir, { recursive: true })
+  }
+} catch (err) {
+  console.error('Could not create media upload directory:', mediaUploadDir, err.message)
 }
 
 const storage = multer.diskStorage({

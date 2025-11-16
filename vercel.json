@@ -2,8 +2,8 @@
 {
   "version": 2,
 
-  "outputDirectory": "dist",
-  "framework": "vite",
+
+
   "routes": [
     {
       "src": "/(.*)",
