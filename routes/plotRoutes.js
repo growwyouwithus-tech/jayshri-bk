@@ -1,4 +1,7 @@
 const express = require('express');
+const multer = require('multer');
+const fs = require('fs');
+const path = require('path');
 const Plot = require('../models/Plot');
 const Colony = require('../models/Colony');
 const { protect, authorize } = require('../middleware/auth');
@@ -6,6 +9,45 @@ const { sendSuccess, sendPaginated } = require('../middleware/responseHandler');
 const { validations, handleValidationErrors, sanitizeRequest } = require('../utils/validation');
 
 const router = express.Router();
+
+// Configure multer for payment slip uploads
+const isServerless = Boolean(process.env.VERCEL || process.env.AWS_REGION || process.env.LAMBDA_TASK_ROOT);
+
+const paymentSlipUploadDir = isServerless
+  ? path.join('/tmp', 'uploads', 'payment-slips')
+  : path.join(__dirname, '../uploads/payment-slips');
+
+try {
+  if (!fs.existsSync(paymentSlipUploadDir)) {
+    fs.mkdirSync(paymentSlipUploadDir, { recursive: true });
+  }
+} catch (err) {
+  console.error('Could not create payment slip upload directory:', paymentSlipUploadDir, err.message);
+}
+
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, paymentSlipUploadDir);
+  },
+  filename: (req, file, cb) => {
+    const uniqueSuffix = `${Date.now()}-${Math.round(Math.random() * 1e9)}`;
+    cb(null, `payment-slip-${uniqueSuffix}${path.extname(file.originalname)}`);
+  }
+});
+
+const upload = multer({ 
+  storage,
+  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
+  fileFilter: (req, file, cb) => {
+    const allowedTypes = /jpeg|jpg|png|pdf/;
+    const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
+    const mimetype = allowedTypes.test(file.mimetype);
+    if (extname && mimetype) {
+      return cb(null, true);
+    }
+    cb(new Error('Only images (JPEG, PNG) and PDF files are allowed'));
+  }
+});
 
 // @desc    Get plots by colony (Public for user app)
 // @route   GET /api/v1/plots/colony/:colonyId
@@ -130,7 +172,11 @@ router.get('/', async (req, res) => {
 // @route   POST /api/v1/plots
 // @access  Private (Admin, Manager)
 router.post('/', 
-  authorize('plot_create', 'all'), 
+  authorize('plot_create', 'all'),
+  upload.fields([
+    { name: 'paymentSlip', maxCount: 1 },
+    { name: 'registryDocument', maxCount: 1 }
+  ]),
   sanitizeRequest,
   validations.plot.create,
   handleValidationErrors,
@@ -163,6 +209,16 @@ router.post('/',
         createdBy: req.user._id
       };
 
+      // Add file paths if files were uploaded
+      if (req.files) {
+        if (req.files.paymentSlip && req.files.paymentSlip[0]) {
+          plotData.paymentSlip = `/uploads/payment-slips/${path.basename(req.files.paymentSlip[0].path)}`;
+        }
+        if (req.files.registryDocument && req.files.registryDocument[0]) {
+          plotData.registryDocument = `/uploads/payment-slips/${path.basename(req.files.registryDocument[0].path)}`;
+        }
+      }
+
     const plot = await Plot.create(plotData);
     await plot.populate({ path: 'colony', select: 'name city sellers' });
     return sendSuccess(res, 201, 'Plot created successfully', { plot });
@@ -180,16 +236,32 @@ router.post('/',
 // @route   PUT /api/v1/plots/:id
 // @access  Private (Admin, Manager)
 router.put('/:id', 
-  authorize('plot_update', 'all'), 
+  authorize('plot_update', 'all'),
+  upload.fields([
+    { name: 'paymentSlip', maxCount: 1 },
+    { name: 'registryDocument', maxCount: 1 }
+  ]),
   validations.params.objectId,
   sanitizeRequest,
   validations.plot.update,
   handleValidationErrors,
   async (req, res) => {
     try {
+      const updateData = { ...req.body };
+      
+      // Add file paths if files were uploaded
+      if (req.files) {
+        if (req.files.paymentSlip && req.files.paymentSlip[0]) {
+          updateData.paymentSlip = `/uploads/payment-slips/${path.basename(req.files.paymentSlip[0].path)}`;
+        }
+        if (req.files.registryDocument && req.files.registryDocument[0]) {
+          updateData.registryDocument = `/uploads/payment-slips/${path.basename(req.files.registryDocument[0].path)}`;
+        }
+      }
+
       const plot = await Plot.findByIdAndUpdate(
         req.params.id,
-        req.body,
+        updateData,
         { new: true, runValidators: true }
       ).populate({ path: 'colony', select: 'name city sellers' });
 

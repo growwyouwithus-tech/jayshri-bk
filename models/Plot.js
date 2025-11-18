@@ -30,13 +30,39 @@ const plotSchema = new mongoose.Schema({
   },
   status: {
     type: String,
-    enum: ['available', 'blocked', 'sold', 'reserved'],
+    enum: ['available', 'blocked', 'sold', 'reserved', 'booked'],
     default: 'available'
   },
   ownerType: {
     type: String,
     enum: ['seller', 'owner'],
     default: 'owner'
+  },
+  // Booking/Sale Details
+  customerName: {
+    type: String,
+    trim: true
+  },
+  customerNumber: {
+    type: String,
+    trim: true
+  },
+  modeOfPayment: {
+    type: String,
+    enum: ['cash', 'bank_transfer', 'upi', 'cheque', 'card', ''],
+    default: ''
+  },
+  transactionDate: {
+    type: Date
+  },
+  paidAmount: {
+    type: Number
+  },
+  paymentSlip: {
+    type: String // URL to the uploaded file
+  },
+  registryDocument: {
+    type: String // URL to the uploaded registry document
   },
   corner: {
     type: Boolean,
