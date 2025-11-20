@@ -91,6 +91,7 @@ app.use((req, res, next) => {
 // Routes
 app.use('/api/v1/auth', require('./routes/authRoutes'));
 app.use('/api/v1/users', require('./routes/userRoutes'));
+app.use('/api/v1/roles', require('./routes/roleRoutes'));
 app.use('/api/v1/colonies', require('./routes/colonyRoutes'));
 app.use('/api/v1/plots', require('./routes/plotRoutes'));
 app.use('/api/v1/bookings', require('./routes/bookingRoutes'));

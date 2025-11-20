@@ -66,6 +66,15 @@ const initRoles = async () => {
           'colony_read', 'plot_read', 'booking_read', 'registry_read', 'registry_create', 'registry_update'
         ],
         level: 6
+      },
+      {
+        name: 'Colony Manager',
+        description: 'Colony and plot management access',
+        permissions: [
+          'plot_read', 'plot_create', 'plot_update', 'plot_delete',
+          'colony_read'
+        ],
+        level: 7
       }
     ];
 

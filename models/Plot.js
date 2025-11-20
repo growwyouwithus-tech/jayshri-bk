@@ -47,6 +47,45 @@ const plotSchema = new mongoose.Schema({
     type: String,
     trim: true
   },
+  customerShortAddress: {
+    type: String,
+    trim: true
+  },
+  customerFullAddress: {
+    type: String,
+    trim: true
+  },
+  registryDate: {
+    type: Date
+  },
+  moreInformation: {
+    type: String,
+    trim: true
+  },
+  finalPrice: {
+    type: Number
+  },
+  agentName: {
+    type: String,
+    trim: true
+  },
+  agentCode: {
+    type: String,
+    trim: true
+  },
+  advocateName: {
+    type: String,
+    trim: true
+  },
+  advocateCode: {
+    type: String,
+    trim: true
+  },
+  tahsil: {
+    type: String,
+    enum: ['agra', 'fatehabad', 'kheragarh', 'bah', 'pinahat', 'achhnera', 'etmadpur', ''],
+    default: ''
+  },
   modeOfPayment: {
     type: String,
     enum: ['cash', 'bank_transfer', 'upi', 'cheque', 'card', ''],

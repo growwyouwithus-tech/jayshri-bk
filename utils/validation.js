@@ -195,7 +195,124 @@ const validations = {
         .customSanitizer(value => {
           if (!Array.isArray(value)) return []
           return value.map(sanitizers.sanitizeUrl).filter(Boolean)
+        }),
+
+      // Sale Details validations
+      body('customerName')
+        .optional()
+        .trim()
+        .isLength({ min: 2, max: 100 })
+        .withMessage('Customer name must be between 2 and 100 characters')
+        .matches(/^[A-Za-z\s\-\.]+$/)
+        .withMessage('Customer name can only contain letters, spaces, hyphens, and periods')
+        .customSanitizer(sanitizers.sanitizeString),
+
+      body('customerNumber')
+        .optional()
+        .custom((value) => {
+          if (!value) return true
+          const sanitized = sanitizers.sanitizePhone(value)
+          return sanitized !== null
         })
+        .withMessage('Please provide a valid customer phone number')
+        .customSanitizer(sanitizers.sanitizePhone),
+
+      body('customerShortAddress')
+        .optional()
+        .trim()
+        .isLength({ max: 200 })
+        .withMessage('Customer short address cannot exceed 200 characters')
+        .customSanitizer(sanitizers.sanitizeString),
+
+      body('customerFullAddress')
+        .optional()
+        .trim()
+        .isLength({ max: 500 })
+        .withMessage('Customer full address cannot exceed 500 characters')
+        .customSanitizer(sanitizers.sanitizeString),
+
+      body('registryDate')
+        .optional()
+        .isISO8601()
+        .withMessage('Registry date must be a valid date')
+        .customSanitizer(sanitizers.sanitizeDate),
+
+      body('moreInformation')
+        .optional()
+        .trim()
+        .isLength({ max: 1000 })
+        .withMessage('More information cannot exceed 1000 characters')
+        .customSanitizer(sanitizers.sanitizeString),
+
+      body('finalPrice')
+        .optional()
+        .isNumeric()
+        .withMessage('Final price must be a number')
+        .isFloat({ min: 0, max: 100000000 })
+        .withMessage('Final price must be between 0 and 10 crores')
+        .customSanitizer(value => sanitizers.sanitizeNumber(value, { min: 0, max: 100000000 })),
+
+      body('agentName')
+        .optional()
+        .trim()
+        .isLength({ max: 100 })
+        .withMessage('Agent name cannot exceed 100 characters')
+        .matches(/^[A-Za-z\s\-\.]*$/)
+        .withMessage('Agent name can only contain letters, spaces, hyphens, and periods')
+        .customSanitizer(sanitizers.sanitizeString),
+
+      body('agentCode')
+        .optional()
+        .trim()
+        .isLength({ max: 50 })
+        .withMessage('Agent code cannot exceed 50 characters')
+        .matches(/^[A-Za-z0-9\-]*$/)
+        .withMessage('Agent code can only contain letters, numbers, and hyphens')
+        .customSanitizer(sanitizers.sanitizeString),
+
+      body('advocateName')
+        .optional()
+        .trim()
+        .isLength({ max: 100 })
+        .withMessage('Advocate name cannot exceed 100 characters')
+        .matches(/^[A-Za-z\s\-\.]*$/)
+        .withMessage('Advocate name can only contain letters, spaces, hyphens, and periods')
+        .customSanitizer(sanitizers.sanitizeString),
+
+      body('advocateCode')
+        .optional()
+        .trim()
+        .isLength({ max: 50 })
+        .withMessage('Advocate code cannot exceed 50 characters')
+        .matches(/^[A-Za-z0-9\-]*$/)
+        .withMessage('Advocate code can only contain letters, numbers, and hyphens')
+        .customSanitizer(sanitizers.sanitizeString),
+
+      body('tahsil')
+        .optional()
+        .isIn(['agra', 'fatehabad', 'kheragarh', 'bah', 'pinahat', 'achhnera', 'etmadpur', ''])
+        .withMessage('Invalid tahsil selection')
+        .customSanitizer(sanitizers.sanitizeString),
+
+      body('modeOfPayment')
+        .optional()
+        .isIn(['cash', 'bank_transfer', 'upi', 'cheque', 'card', ''])
+        .withMessage('Invalid payment mode')
+        .customSanitizer(sanitizers.sanitizeString),
+
+      body('transactionDate')
+        .optional()
+        .isISO8601()
+        .withMessage('Transaction date must be a valid date')
+        .customSanitizer(sanitizers.sanitizeDate),
+
+      body('paidAmount')
+        .optional()
+        .isNumeric()
+        .withMessage('Paid amount must be a number')
+        .isFloat({ min: 0, max: 100000000 })
+        .withMessage('Paid amount must be between 0 and 10 crores')
+        .customSanitizer(value => sanitizers.sanitizeNumber(value, { min: 0, max: 100000000 }))
     ],
 
     update: [
@@ -228,7 +345,124 @@ const validations = {
         .optional()
         .isIn(['available', 'blocked', 'sold', 'reserved'])
         .withMessage('Invalid plot status')
-        .customSanitizer(sanitizers.sanitizeString)
+        .customSanitizer(sanitizers.sanitizeString),
+
+      // Sale Details validations for update
+      body('customerName')
+        .optional()
+        .trim()
+        .isLength({ min: 2, max: 100 })
+        .withMessage('Customer name must be between 2 and 100 characters')
+        .matches(/^[A-Za-z\s\-\.]+$/)
+        .withMessage('Customer name can only contain letters, spaces, hyphens, and periods')
+        .customSanitizer(sanitizers.sanitizeString),
+
+      body('customerNumber')
+        .optional()
+        .custom((value) => {
+          if (!value) return true
+          const sanitized = sanitizers.sanitizePhone(value)
+          return sanitized !== null
+        })
+        .withMessage('Please provide a valid customer phone number')
+        .customSanitizer(sanitizers.sanitizePhone),
+
+      body('customerShortAddress')
+        .optional()
+        .trim()
+        .isLength({ max: 200 })
+        .withMessage('Customer short address cannot exceed 200 characters')
+        .customSanitizer(sanitizers.sanitizeString),
+
+      body('customerFullAddress')
+        .optional()
+        .trim()
+        .isLength({ max: 500 })
+        .withMessage('Customer full address cannot exceed 500 characters')
+        .customSanitizer(sanitizers.sanitizeString),
+
+      body('registryDate')
+        .optional()
+        .isISO8601()
+        .withMessage('Registry date must be a valid date')
+        .customSanitizer(sanitizers.sanitizeDate),
+
+      body('moreInformation')
+        .optional()
+        .trim()
+        .isLength({ max: 1000 })
+        .withMessage('More information cannot exceed 1000 characters')
+        .customSanitizer(sanitizers.sanitizeString),
+
+      body('finalPrice')
+        .optional()
+        .isNumeric()
+        .withMessage('Final price must be a number')
+        .isFloat({ min: 0, max: 100000000 })
+        .withMessage('Final price must be between 0 and 10 crores')
+        .customSanitizer(value => sanitizers.sanitizeNumber(value, { min: 0, max: 100000000 })),
+
+      body('agentName')
+        .optional()
+        .trim()
+        .isLength({ max: 100 })
+        .withMessage('Agent name cannot exceed 100 characters')
+        .matches(/^[A-Za-z\s\-\.]*$/)
+        .withMessage('Agent name can only contain letters, spaces, hyphens, and periods')
+        .customSanitizer(sanitizers.sanitizeString),
+
+      body('agentCode')
+        .optional()
+        .trim()
+        .isLength({ max: 50 })
+        .withMessage('Agent code cannot exceed 50 characters')
+        .matches(/^[A-Za-z0-9\-]*$/)
+        .withMessage('Agent code can only contain letters, numbers, and hyphens')
+        .customSanitizer(sanitizers.sanitizeString),
+
+      body('advocateName')
+        .optional()
+        .trim()
+        .isLength({ max: 100 })
+        .withMessage('Advocate name cannot exceed 100 characters')
+        .matches(/^[A-Za-z\s\-\.]*$/)
+        .withMessage('Advocate name can only contain letters, spaces, hyphens, and periods')
+        .customSanitizer(sanitizers.sanitizeString),
+
+      body('advocateCode')
+        .optional()
+        .trim()
+        .isLength({ max: 50 })
+        .withMessage('Advocate code cannot exceed 50 characters')
+        .matches(/^[A-Za-z0-9\-]*$/)
+        .withMessage('Advocate code can only contain letters, numbers, and hyphens')
+        .customSanitizer(sanitizers.sanitizeString),
+
+      body('tahsil')
+        .optional()
+        .isIn(['agra', 'fatehabad', 'kheragarh', 'bah', 'pinahat', 'achhnera', 'etmadpur', ''])
+        .withMessage('Invalid tahsil selection')
+        .customSanitizer(sanitizers.sanitizeString),
+
+      body('modeOfPayment')
+        .optional()
+        .isIn(['cash', 'bank_transfer', 'upi', 'cheque', 'card', ''])
+        .withMessage('Invalid payment mode')
+        .customSanitizer(sanitizers.sanitizeString),
+
+      body('transactionDate')
+        .optional()
+        .isISO8601()
+        .withMessage('Transaction date must be a valid date')
+        .customSanitizer(sanitizers.sanitizeDate),
+
+      body('paidAmount')
+        .optional()
+        .isNumeric()
+        .withMessage('Paid amount must be a number')
+        .isFloat({ min: 0, max: 100000000 })
+        .withMessage('Paid amount must be between 0 and 10 crores')
+        .customSanitizer(value => sanitizers.sanitizeNumber(value, { min: 0, max: 100000000 }))
     ]
   },
 

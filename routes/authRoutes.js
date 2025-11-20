@@ -69,6 +69,9 @@ router.post('/register', [
       createdBy: req.user ? req.user._id : null
     });
 
+    // Populate role before sending response
+    await user.populate('role');
+
     // Generate token
     const token = generateToken(user._id);
 
