@@ -8,8 +8,8 @@
     "dev": "nodemon server.js",
     "init-db": "node scripts/initDatabase.js",
     "seed": "node scripts/seedDatabase.js",
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "npm run build"
+    "test": "echo \"Error: no test specified\" && exit 1"
+
 
 
 
