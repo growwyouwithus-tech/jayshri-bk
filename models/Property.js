@@ -23,8 +23,7 @@ const propertySchema = new mongoose.Schema({
   },
   colony: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'Colony',
-    required: [true, 'Colony reference is required']
+    ref: 'Colony'
   },
   city: {
     type: mongoose.Schema.Types.ObjectId,
@@ -37,6 +36,16 @@ const propertySchema = new mongoose.Schema({
   address: {
     type: String,
     trim: true
+  },
+  coordinates: {
+    latitude: Number,
+    longitude: Number
+  },
+  totalLandAreaGaj: {
+    type: Number
+  },
+  basePricePerGaj: {
+    type: Number
   },
   tagline: {
     type: String,
@@ -68,7 +77,7 @@ const propertySchema = new mongoose.Schema({
   },
   status: {
     type: String,
-    enum: ['draft', 'active', 'inactive'],
+    enum: ['draft', 'active', 'inactive', 'ready_to_sell', 'under_development', 'sold_out'],
     default: 'active'
   },
   createdBy: {

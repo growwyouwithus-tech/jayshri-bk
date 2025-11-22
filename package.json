@@ -8,6 +8,10 @@
     "dev": "nodemon server.js",
     "init-db": "node scripts/initDatabase.js",
     "seed": "node scripts/seedDatabase.js",
+    "update-roles": "node scripts/updateRoles.js",
+    "generate-codes": "node scripts/generateUserCodes.js",
+    "add-dummy": "node scripts/addDummyData.js",
+    "clear-data": "node scripts/clearAndAddData.js",
     "test": "echo \"Error: no test specified\" && exit 1"
 
 

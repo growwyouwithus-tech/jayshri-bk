@@ -11,6 +11,11 @@ const plotSchema = new mongoose.Schema({
     ref: 'Colony',
     required: [true, 'Colony is required']
   },
+  propertyId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Property',
+    required: [true, 'Property is required']
+  },
   area: {
     type: Number,
     required: [true, 'Plot area is required']

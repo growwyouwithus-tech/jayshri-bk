@@ -8,6 +8,51 @@ const { protect, authorize } = require('../middleware/auth')
 
 const router = express.Router()
 
+// @desc    Get all properties (Public for User App)
+// @route   GET /api/v1/properties/public
+// @access  Public
+router.get('/public', async (req, res) => {
+  try {
+    const { status = 'active' } = req.query
+    const query = { status }
+
+    const properties = await Property.find(query)
+      .populate('colony', 'name address coordinates')
+      .populate('city', 'name state')
+      .sort({ createdAt: -1 })
+      .lean()
+
+    res.json({
+      success: true,
+      data: { properties }
+    })
+  } catch (error) {
+    console.error('Get public properties error:', error)
+    res.status(500).json({ success: false, message: 'Server error' })
+  }
+})
+
+// @desc    Get property by ID (Public for User App)
+// @route   GET /api/v1/properties/public/:id
+// @access  Public
+router.get('/public/:id', async (req, res) => {
+  try {
+    const property = await Property.findById(req.params.id)
+      .populate('colony', 'name address coordinates layoutUrl')
+      .populate('city', 'name state')
+      .lean()
+
+    if (!property) {
+      return res.status(404).json({ success: false, message: 'Property not found' })
+    }
+
+    res.json({ success: true, data: { property } })
+  } catch (error) {
+    console.error('Get public property error:', error)
+    res.status(500).json({ success: false, message: 'Server error' })
+  }
+})
+
 // Determine a writable upload directory based on the runtime environment
 // In serverless platforms (e.g., Vercel / Netlify / AWS Lambda) the default working
 // directory is read-only. Only the /tmp directory is writable. We detect such

@@ -608,6 +608,12 @@ const validations = {
         .custom((value) => sanitizers.isValidObjectId(value))
         .withMessage('Invalid ID format')
         .customSanitizer(sanitizers.sanitizeString)
+    ],
+    colonyId: [
+      param('colonyId')
+        .custom((value) => sanitizers.isValidObjectId(value))
+        .withMessage('Invalid colony ID format')
+        .customSanitizer(sanitizers.sanitizeString)
     ]
   }
 }

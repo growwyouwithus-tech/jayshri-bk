@@ -53,7 +53,7 @@ const upload = multer({
 // @route   GET /api/v1/plots/colony/:colonyId
 // @access  Public
 router.get('/colony/:colonyId', 
-  validations.params.objectId,
+  validations.params.colonyId,
   validations.query.plotFilters,
   handleValidationErrors,
   async (req, res) => {
@@ -102,6 +102,7 @@ router.get('/:id',
     try {
       const plot = await Plot.findById(req.params.id)
         .populate({ path: 'colony', select: 'name city address sellers' })
+        .populate({ path: 'propertyId', select: 'name category basePricePerGaj' })
         .populate('currentOwner', 'name email phone')
         .populate('createdBy', 'name email')
         .lean();
@@ -144,6 +145,7 @@ router.get('/', async (req, res) => {
 
     const plots = await Plot.find(query)
       .populate({ path: 'colony', select: 'name city sellers' })
+      .populate({ path: 'propertyId', select: 'name category basePricePerGaj' })
       .populate('currentOwner', 'name email')
       .populate('createdBy', 'name email')
       .sort({ createdAt: -1 })
