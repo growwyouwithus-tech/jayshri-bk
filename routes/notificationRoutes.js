@@ -11,11 +11,13 @@ router.use(protect);
 // @access  Private
 router.get('/', async (req, res) => {
   try {
-    // Placeholder for notification functionality
+    // Return empty notifications array with proper structure
     res.json({
       success: true,
-      data: [],
-      message: 'Notification feature coming soon'
+      data: {
+        notifications: []
+      },
+      message: 'No notifications available'
     });
   } catch (error) {
     console.error('Get notifications error:', error);

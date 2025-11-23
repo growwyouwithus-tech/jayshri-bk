@@ -92,6 +92,47 @@ router.get('/colony/:colonyId',
   }
 );
 
+// @desc    Get plots by property (Public for user app)
+// @route   GET /api/v1/plots/property/:propertyId
+// @access  Public
+router.get('/property/:propertyId', 
+  async (req, res) => {
+    try {
+      const { status, minPrice, maxPrice, minArea, maxArea, facing } = req.query;
+      
+      const query = { propertyId: req.params.propertyId };
+      
+      if (status) query.status = status;
+      if (facing) query.facing = facing;
+      if (minPrice || maxPrice) {
+        query.totalPrice = {};
+        if (minPrice) query.totalPrice.$gte = minPrice;
+        if (maxPrice) query.totalPrice.$lte = maxPrice;
+      }
+      if (minArea || maxArea) {
+        query.area = {};
+        if (minArea) query.area.$gte = minArea;
+        if (maxArea) query.area.$lte = maxArea;
+      }
+
+      const plots = await Plot.find(query)
+        .populate({ path: 'colony', select: 'name city sellers' })
+        .populate({ path: 'propertyId', select: 'name category basePricePerGaj totalLandAreaGaj address' })
+        .populate('currentOwner', 'name email phone')
+        .sort({ plotNumber: 1 })
+        .lean();
+
+      return sendSuccess(res, 200, 'Plots fetched', { plots });
+    } catch (error) {
+      console.error('Get plots by property error:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Server error'
+      });
+    }
+  }
+);
+
 // @desc    Get plot by ID (Public for user app)
 // @route   GET /api/v1/plots/:id
 // @access  Public

@@ -74,7 +74,7 @@ router.post('/register', [
       });
     }
 
-    const { name, email, password, phone, referredBy } = req.body;
+    const { name, email, password, phone, referredBy, agentCode } = req.body;
 
     // Check if customer already exists
     const existingCustomer = await Customer.findOne({ email });
@@ -92,6 +92,34 @@ router.post('/register', [
       password,
       phone
     };
+
+    // Handle agent code validation
+    if (agentCode) {
+      const User = require('../models/User');
+      const Role = require('../models/Role');
+      
+      // Find agent role
+      const agentRole = await Role.findOne({ name: 'Agent' });
+      
+      if (agentRole) {
+        // Find user with this code and agent role
+        const agent = await User.findOne({ 
+          userCode: agentCode.trim().toUpperCase(),
+          role: agentRole._id,
+          isActive: true
+        });
+        
+        if (agent) {
+          customerData.agentId = agent._id;
+          customerData.agentCode = agentCode.trim().toUpperCase();
+        } else {
+          return res.status(400).json({
+            success: false,
+            message: 'Invalid Agent Code. Please check and try again.'
+          });
+        }
+      }
+    }
 
     // Handle referral
     if (referredBy) {
@@ -127,7 +155,6 @@ router.post('/register', [
 // @route   POST /api/v1/customer-auth/login
 // @access  Public
 router.post('/login', [
-  body('email').isEmail().withMessage('Please provide a valid email'),
   body('password').notEmpty().withMessage('Password is required')
 ], async (req, res) => {
   try {
@@ -140,10 +167,19 @@ router.post('/login', [
       });
     }
 
-    const { email, password } = req.body;
+    const { email, phone, password } = req.body;
 
-    // Check if customer exists
-    const customer = await Customer.findOne({ email }).select('+password');
+    // Validate that either email or phone is provided
+    if (!email && !phone) {
+      return res.status(400).json({
+        success: false,
+        message: 'Please provide either email or phone number'
+      });
+    }
+
+    // Check if customer exists by email or phone
+    const query = email ? { email } : { phone };
+    const customer = await Customer.findOne(query).select('+password');
     if (!customer) {
       return res.status(401).json({
         success: false,
@@ -296,6 +332,40 @@ router.put('/change-password', protectCustomer, [
     res.status(500).json({
       success: false,
       message: 'Server error during password change'
+    });
+  }
+});
+
+// @desc    Get customer's bookings
+// @route   GET /api/v1/customer-auth/my-bookings
+// @access  Private (Customer)
+router.get('/my-bookings', protectCustomer, async (req, res) => {
+  try {
+    const Booking = require('../models/Booking');
+    
+    // Find bookings where buyer matches customer
+    const bookings = await Booking.find({ buyer: req.customer._id })
+      .populate({
+        path: 'plot',
+        select: 'plotNumber plotNo area areaGaj facing cornerPlot totalPrice pricePerGaj status',
+        populate: {
+          path: 'colony',
+          select: 'name location'
+        }
+      })
+      .sort({ createdAt: -1 });
+
+    res.json({
+      success: true,
+      data: {
+        bookings
+      }
+    });
+  } catch (error) {
+    console.error('Get customer bookings error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error fetching bookings'
     });
   }
 });

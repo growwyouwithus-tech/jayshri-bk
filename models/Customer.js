@@ -51,6 +51,15 @@ const customerSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Customer'
   },
+  // Agent referral
+  agentId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User'
+  },
+  agentCode: {
+    type: String,
+    trim: true
+  },
   bookings: [{
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Booking'

@@ -13,8 +13,13 @@ const router = express.Router()
 // @access  Public
 router.get('/public', async (req, res) => {
   try {
-    const { status = 'active' } = req.query
-    const query = { status }
+    const { status } = req.query
+    const query = {}
+    
+    // Only filter by status if explicitly provided
+    if (status) {
+      query.status = status
+    }
 
     const properties = await Property.find(query)
       .populate('colony', 'name address coordinates')

@@ -6,10 +6,6 @@ const colonySchema = new mongoose.Schema({
     required: [true, 'Colony name is required'],
     trim: true
   },
-  description: {
-    type: String,
-    trim: true
-  },
   city: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'City'
@@ -39,6 +35,9 @@ const colonySchema = new mongoose.Schema({
     default: 0
   },
   pricePerSqFt: {
+    type: Number
+  },
+  purchasePrice: {
     type: Number
   },
   amenities: [{
@@ -73,8 +72,7 @@ const colonySchema = new mongoose.Schema({
   sellers: [{
     name: {
       type: String,
-      trim: true,
-      required: [true, 'Seller name is required']
+      trim: true
     },
     mobile: {
       type: String,

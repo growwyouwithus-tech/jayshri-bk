@@ -9,7 +9,7 @@ const router = express.Router();
 // @desc    Get all colonies (Public for user app)
 // @route   GET /api/v1/colonies
 // @access  Public
-router.get('/', protect, async (req, res) => {
+router.get('/', async (req, res) => {
   try {
     const { page = 1, limit = 10, city, search, status } = req.query;
     
@@ -58,7 +58,7 @@ router.get('/', protect, async (req, res) => {
 // @desc    Get colony by ID (Public for user app)
 // @route   GET /api/v1/colonies/:id
 // @access  Public
-router.get('/:id', protect, async (req, res) => {
+router.get('/:id', async (req, res) => {
   try {
     const colony = await Colony.findById(req.params.id)
       .populate('city', 'name state country')
@@ -127,9 +127,14 @@ router.post('/', authorize('colony_create', 'all'), [
     });
   } catch (error) {
     console.error('Create colony error:', error);
+    console.error('Error details:', error.message);
+    console.error('Error stack:', error.stack);
+    
+    // Send detailed error in development
     res.status(500).json({
       success: false,
-      message: 'Server error'
+      message: error.message || 'Server error',
+      error: process.env.NODE_ENV === 'development' ? error.message : 'Server error'
     });
   }
 });

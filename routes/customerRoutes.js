@@ -8,11 +8,16 @@ const { protect, authorize } = require('../middleware/auth');
  * @desc    Get all customers (Admin only)
  * @access  Private/Admin
  */
-router.get('/', protect, authorize('Admin', 'Manager'), async (req, res) => {
+router.get('/', protect, authorize('Admin', 'Manager', 'Agent'), async (req, res) => {
   try {
-    const { search, page = 1, limit = 50 } = req.query;
+    const { search, page = 1, limit = 50, agentCode } = req.query;
     
     let query = {};
+    
+    // Filter by agent code if provided (for agent dashboard)
+    if (agentCode) {
+      query.agentCode = agentCode.trim().toUpperCase();
+    }
     
     // Search by name, email, or phone
     if (search) {
@@ -25,6 +30,15 @@ router.get('/', protect, authorize('Admin', 'Manager'), async (req, res) => {
     
     const customers = await Customer.find(query)
       .select('-password')
+      .populate('agentId', 'name email userCode')
+      .populate({
+        path: 'bookings',
+        select: 'bookingNumber totalAmount paidAmount status createdAt',
+        populate: {
+          path: 'plot',
+          select: 'plotNo plotNumber'
+        }
+      })
       .sort({ createdAt: -1 })
       .limit(limit * 1)
       .skip((page - 1) * limit);
