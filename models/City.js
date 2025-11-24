@@ -11,6 +11,23 @@ const citySchema = new mongoose.Schema({
     required: [true, 'State is required'],
     trim: true
   },
+  tagline: {
+    type: String,
+    trim: true
+  },
+  priority: {
+    type: Number,
+    default: 0
+  },
+  areas: [{
+    name: {
+      type: String,
+      trim: true
+    },
+    _id: {
+      type: String
+    }
+  }],
   country: {
     type: String,
     default: 'India',

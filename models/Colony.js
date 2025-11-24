@@ -69,28 +69,13 @@ const colonySchema = new mongoose.Schema({
   features: [{
     type: String
   }],
-  sellers: [{
+  khatoniHolders: [{
     name: {
       type: String,
       trim: true
     },
-    mobile: {
-      type: String,
-      trim: true
-    },
-    email: {
-      type: String,
-      trim: true
-    },
-    address: {
-      type: String,
-      trim: true
-    },
-    notes: {
-      type: String,
-      trim: true
-    },
-    sharePercent: Number
+    address: String,
+    mobile: String
   }],
   nearbyPlaces: [{
     name: String,

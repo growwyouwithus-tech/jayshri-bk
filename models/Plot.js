@@ -6,6 +6,11 @@ const plotSchema = new mongoose.Schema({
     required: [true, 'Plot number is required'],
     trim: true
   },
+  plotType: {
+    type: String,
+    enum: ['residential', 'commercial'],
+    default: 'residential'
+  },
   colony: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Colony',
@@ -133,6 +138,9 @@ const plotSchema = new mongoose.Schema({
     distance: Number
   }],
   images: [{
+    type: String
+  }],
+  plotImages: [{
     type: String
   }],
   documents: [{

@@ -21,6 +21,10 @@ const propertySchema = new mongoose.Schema({
     enum: ['Residential', 'Commercial', 'Farmhouse'],
     default: 'Residential'
   },
+  categories: [{
+    type: String,
+    enum: ['Residential', 'Commercial', 'Farmhouse']
+  }],
   colony: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Colony'
@@ -58,9 +62,6 @@ const propertySchema = new mongoose.Schema({
   facilities: [{
     type: String
   }],
-  amenities: [{
-    type: String
-  }],
   roads: [{
     name: String,
     lengthFt: Number,
@@ -68,8 +69,11 @@ const propertySchema = new mongoose.Schema({
   }],
   parks: [{
     name: String,
-    lengthFt: Number,
-    widthFt: Number
+    frontFt: Number,
+    backFt: Number,
+    leftFt: Number,
+    rightFt: Number,
+    areaGaj: Number
   }],
   media: {
     type: mediaSchema,
