@@ -103,6 +103,7 @@ app.use('/api/v1/cities', require('./routes/cityRoutes'));
 app.use('/api/v1/registry', require('./routes/registryRoutes'));
 app.use('/api/v1/commissions', require('./routes/commissionRoutes'));
 app.use('/api/v1/notifications', require('./routes/notificationRoutes'));
+app.use('/api/v1/kisan-payments', require('./routes/kisanPaymentRoutes'));
 
 // Health check endpoint
 app.get('/api/v1/health', (req, res) => {
