@@ -204,20 +204,40 @@ router.post(
     if (errorResponse) return
 
     try {
+      console.log('📥 Received property data:', req.body)
+      
       const facilities = parseArrayField(req.body.facilities)
       const amenities = parseArrayField(req.body.amenities)
       const roads = parseArrayField(req.body.roads)
       const parks = parseArrayField(req.body.parks)
+      const categories = parseArrayField(req.body.categories)
+
+      console.log('📦 Parsed arrays:', { facilities, amenities, roads, parks, categories })
+
+      // Get colony data to extract total land area
+      const Colony = require('../models/Colony')
+      const colonyId = req.body.colonyId || req.body.colony
+      let totalLandAreaGaj = null
+      
+      if (colonyId) {
+        const colony = await Colony.findById(colonyId)
+        if (colony) {
+          // Calculate from totalArea (in sq ft) or use existing totalLandAreaGaj
+          totalLandAreaGaj = colony.totalArea ? Math.round(colony.totalArea / 9) : null
+        }
+      }
 
       const propertyData = {
         name: req.body.name,
-        category: req.body.category || 'Residential',
-        colony: req.body.colonyId || req.body.colony,
+        category: req.body.category || (categories.length > 0 ? categories[0] : 'Residential'),
+        categories: categories,
+        colony: colonyId,
         city: req.body.cityId || null,
         area: req.body.areaId || null,
         address: req.body.address,
         tagline: req.body.tagline,
         description: req.body.description,
+        totalLandAreaGaj: totalLandAreaGaj,
         facilities,
         amenities,
         roads,
@@ -225,6 +245,8 @@ router.post(
         media: buildMediaPayload(req.files, { moreImages: [] }),
         createdBy: req.user._id
       }
+      
+      console.log('💾 Property data to save:', propertyData)
 
       const property = await Property.create(propertyData)
       await property.populate([
@@ -233,14 +255,21 @@ router.post(
         { path: 'area', select: 'name' }
       ])
 
+      console.log('✅ Property created successfully:', property._id)
+
       res.status(201).json({
         success: true,
         message: 'Property created successfully',
         data: { property }
       })
     } catch (error) {
-      console.error('Create property error:', error)
-      res.status(500).json({ success: false, message: 'Server error' })
+      console.error('❌ Create property error:', error)
+      console.error('❌ Error details:', error.message)
+      res.status(500).json({ 
+        success: false, 
+        message: error.message || 'Server error',
+        error: process.env.NODE_ENV === 'development' ? error.message : undefined
+      })
     }
   }
 )
@@ -251,6 +280,9 @@ router.put(
   upload.fields(mediaFields),
   async (req, res) => {
     try {
+      console.log('📥 Updating property:', req.params.id)
+      console.log('📝 Update data:', req.body)
+      
       const property = await Property.findById(req.params.id)
       if (!property) {
         return res.status(404).json({ success: false, message: 'Property not found' })
@@ -277,12 +309,17 @@ router.put(
       if (req.body.parks) {
         property.parks = parseArrayField(req.body.parks)
       }
+      if (req.body.categories) {
+        property.categories = parseArrayField(req.body.categories)
+      }
 
       if (req.files && Object.keys(req.files).length > 0) {
         property.media = buildMediaPayload(req.files, property.media || {})
       }
 
       await property.save()
+      console.log('✅ Property updated successfully:', property._id)
+      
       await property.populate([
         { path: 'colony', select: 'name' },
         { path: 'city', select: 'name state' },

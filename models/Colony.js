@@ -12,8 +12,47 @@ const colonySchema = new mongoose.Schema({
   },
   address: {
     type: String,
-    required: [true, 'Address is required'],
     trim: true
+  },
+  location: {
+    address: {
+      type: String,
+      trim: true
+    },
+    city: {
+      type: String,
+      trim: true
+    },
+    state: {
+      type: String,
+      trim: true
+    },
+    pincode: {
+      type: String,
+      trim: true
+    },
+    coordinates: {
+      lat: Number,
+      lng: Number
+    }
+  },
+  sideMeasurements: {
+    front: {
+      type: Number,
+      default: 0
+    },
+    back: {
+      type: Number,
+      default: 0
+    },
+    left: {
+      type: Number,
+      default: 0
+    },
+    right: {
+      type: Number,
+      default: 0
+    }
   },
   totalArea: {
     type: Number

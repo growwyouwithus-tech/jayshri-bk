@@ -94,7 +94,6 @@ router.use(protect);
 // @access  Private (Admin, Manager)
 router.post('/', authorize('colony_create', 'all'), [
   body('name').notEmpty().withMessage('Colony name is required'),
-  body('address').notEmpty().withMessage('Address is required'),
   body('totalArea').optional().isNumeric().withMessage('Total area must be a number'),
   body('pricePerSqFt').optional().isNumeric().withMessage('Price per sq ft must be a number'),
   body('coordinates.latitude').optional().isNumeric().withMessage('Latitude must be numeric'),
