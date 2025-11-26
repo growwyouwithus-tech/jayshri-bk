@@ -6,27 +6,16 @@ const kisanPaymentSchema = new mongoose.Schema(
       type: Date,
       required: [true, 'Date and time is required'],
     },
-    advanceAmount: {
+    paidAmount: {
       type: Number,
-      required: [true, 'Advance amount is required'],
+      required: [true, 'Paid amount is required'],
       min: [0, 'Amount cannot be negative'],
-    },
-    advanceAmountInWord: {
-      type: String,
-      required: [true, 'Amount in words is required'],
-      trim: true,
     },
     paymentMode: {
       type: String,
       required: [true, 'Payment mode is required'],
       enum: ['CASH', 'CHEQUE', 'ONLINE', 'UPI', 'BANK TRANSFER'],
       default: 'CASH',
-    },
-    transaction: {
-      type: String,
-      required: [true, 'Transaction type is required'],
-      enum: ['DEPOSITED', 'WITHDRAWN', 'PENDING'],
-      default: 'DEPOSITED',
     },
     hintsInWord: {
       type: String,
