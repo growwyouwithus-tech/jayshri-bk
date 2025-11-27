@@ -229,7 +229,7 @@ router.post(
 
       const propertyData = {
         name: req.body.name,
-        category: req.body.category || (categories.length > 0 ? categories[0] : 'Residential'),
+        category: categories.length > 0 ? categories[0] : 'Residential',
         categories: categories,
         colony: colonyId,
         city: req.body.cityId || null,
@@ -289,7 +289,6 @@ router.put(
       }
 
       if (req.body.name) property.name = req.body.name
-      if (req.body.category) property.category = req.body.category
       if (req.body.colonyId || req.body.colony) property.colony = req.body.colonyId || req.body.colony
       if (req.body.cityId) property.city = req.body.cityId
       if (req.body.areaId) property.area = req.body.areaId
@@ -310,7 +309,12 @@ router.put(
         property.parks = parseArrayField(req.body.parks)
       }
       if (req.body.categories) {
-        property.categories = parseArrayField(req.body.categories)
+        const parsedCategories = parseArrayField(req.body.categories)
+        property.categories = parsedCategories
+        // Update single category field based on categories array
+        if (parsedCategories.length > 0) {
+          property.category = parsedCategories[0]
+        }
       }
 
       if (req.files && Object.keys(req.files).length > 0) {

@@ -71,6 +71,10 @@ router.get('/:id', async (req, res) => {
       });
     }
 
+    console.log('Colony found:', colony.name);
+    console.log('Purchase Price:', colony.purchasePrice);
+    console.log('Khatoni Holders:', colony.khatoniHolders);
+
     res.json({
       success: true,
       data: {

@@ -8,7 +8,7 @@ const plotSchema = new mongoose.Schema({
   },
   plotType: {
     type: String,
-    enum: ['residential', 'commercial'],
+    enum: ['residential', 'commercial', 'farmhouse'],
     default: 'residential'
   },
   colony: {

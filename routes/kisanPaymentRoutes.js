@@ -4,11 +4,15 @@ const KisanPayment = require('../models/KisanPayment')
 const { protect, authorize } = require('../middleware/auth')
 const { sendSuccess, sendError } = require('../middleware/responseHandler')
 
-// Get all payments
+// Get all payments (with optional colony filter)
 router.get('/', protect, async (req, res) => {
   try {
-    const payments = await KisanPayment.find()
+    const { colony } = req.query
+    const filter = colony ? { colony } : {}
+    
+    const payments = await KisanPayment.find(filter)
       .sort({ dateTime: -1 })
+      .populate('colony', 'name purchasePrice')
       .populate('createdBy', 'name email')
       .populate('updatedBy', 'name email')
 

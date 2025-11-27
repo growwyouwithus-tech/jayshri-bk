@@ -2,6 +2,15 @@ const mongoose = require('mongoose')
 
 const kisanPaymentSchema = new mongoose.Schema(
   {
+    colony: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Colony',
+      required: [true, 'Colony is required'],
+    },
+    khatoniHolderName: {
+      type: String,
+      trim: true,
+    },
     dateTime: {
       type: Date,
       required: [true, 'Date and time is required'],
@@ -66,7 +75,7 @@ const kisanPaymentSchema = new mongoose.Schema(
 
 // Index for faster queries
 kisanPaymentSchema.index({ dateTime: -1 })
-kisanPaymentSchema.index({ transaction: 1 })
+kisanPaymentSchema.index({ colony: 1 })
 kisanPaymentSchema.index({ paymentMode: 1 })
 
 module.exports = mongoose.model('KisanPayment', kisanPaymentSchema)
