@@ -152,7 +152,13 @@ router.post('/', authorize('user_create', 'all'), [
       createdBy: req.user._id
     });
 
+    // Populate role to ensure userCode is generated
     await user.populate('role');
+    
+    // Save again to ensure userCode is generated if it wasn't on first save
+    if (!user.userCode) {
+      await user.save();
+    }
 
     res.status(201).json({
       success: true,

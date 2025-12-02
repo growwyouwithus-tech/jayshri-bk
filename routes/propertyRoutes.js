@@ -243,6 +243,10 @@ router.post(
         roads,
         parks,
         media: buildMediaPayload(req.files, { moreImages: [] }),
+        coordinates: {
+          latitude: req.body.latitude ? parseFloat(req.body.latitude) : null,
+          longitude: req.body.longitude ? parseFloat(req.body.longitude) : null
+        },
         createdBy: req.user._id
       }
       
@@ -314,6 +318,14 @@ router.put(
         // Update single category field based on categories array
         if (parsedCategories.length > 0) {
           property.category = parsedCategories[0]
+        }
+      }
+
+      // Handle coordinates update
+      if (req.body.latitude !== undefined || req.body.longitude !== undefined) {
+        property.coordinates = {
+          latitude: req.body.latitude ? parseFloat(req.body.latitude) : null,
+          longitude: req.body.longitude ? parseFloat(req.body.longitude) : null
         }
       }
 

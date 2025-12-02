@@ -88,8 +88,9 @@ const validations = {
   // Plot validations
   plot: {
     create: [
-      // Plot number validation
+      // Plot number validation - optional since it's auto-generated
       body('plotNumber')
+        .optional({ checkFalsy: true })
         .trim()
         .isLength({ min: 1, max: 50 })
         .withMessage('Plot number must be between 1 and 50 characters')
@@ -130,7 +131,7 @@ const validations = {
       // Status validation
       body('status')
         .optional()
-        .isIn(['available', 'blocked', 'sold', 'reserved'])
+        .isIn(['available', 'blocked', 'sold', 'reserved', 'booked'])
         .withMessage('Invalid plot status')
         .customSanitizer(sanitizers.sanitizeString),
 
@@ -232,7 +233,7 @@ const validations = {
         .customSanitizer(sanitizers.sanitizeString),
 
       body('registryDate')
-        .optional()
+        .optional({ checkFalsy: true })
         .isISO8601()
         .withMessage('Registry date must be a valid date')
         .customSanitizer(sanitizers.sanitizeDate),
@@ -343,7 +344,7 @@ const validations = {
 
       body('status')
         .optional()
-        .isIn(['available', 'blocked', 'sold', 'reserved'])
+        .isIn(['available', 'blocked', 'sold', 'reserved', 'booked'])
         .withMessage('Invalid plot status')
         .customSanitizer(sanitizers.sanitizeString),
 
@@ -382,7 +383,7 @@ const validations = {
         .customSanitizer(sanitizers.sanitizeString),
 
       body('registryDate')
-        .optional()
+        .optional({ checkFalsy: true })
         .isISO8601()
         .withMessage('Registry date must be a valid date')
         .customSanitizer(sanitizers.sanitizeDate),
@@ -565,7 +566,7 @@ const validations = {
     plotFilters: [
       query('status')
         .optional()
-        .isIn(['available', 'blocked', 'sold', 'reserved'])
+        .isIn(['available', 'blocked', 'sold', 'reserved', 'booked'])
         .withMessage('Invalid status filter')
         .customSanitizer(sanitizers.sanitizeString),
 

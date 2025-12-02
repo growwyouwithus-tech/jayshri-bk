@@ -3,7 +3,7 @@ const mongoose = require('mongoose');
 const plotSchema = new mongoose.Schema({
   plotNumber: {
     type: String,
-    required: [true, 'Plot number is required'],
+    required: false, // Auto-generated in pre-save hook if not provided
     trim: true
   },
   plotType: {
@@ -45,7 +45,7 @@ const plotSchema = new mongoose.Schema({
   },
   ownerType: {
     type: String,
-    enum: ['seller', 'owner'],
+    enum: ['seller', 'owner', 'khatoniHolder'],
     default: 'owner'
   },
   // Booking/Sale Details
@@ -104,6 +104,10 @@ const plotSchema = new mongoose.Schema({
   transactionDate: {
     type: Date
   },
+  //   transactionTime: {
+  //     type:String,
+  //    default: Date.now(),
+  // },
   paidAmount: {
     type: Number
   },
@@ -179,8 +183,30 @@ const plotSchema = new mongoose.Schema({
   timestamps: true
 });
 
-// Calculate total price before saving
-plotSchema.pre('save', function(next) {
+// Generate plot number before saving if not exists
+plotSchema.pre('save', async function(next) {
+  // Only auto-generate plot number for new documents or if plotNumber is empty
+  if (this.isNew && !this.plotNumber) {
+    try {
+      // Find the last plot in this colony
+      const lastPlot = await this.constructor.findOne({
+        colony: this.colony,
+        plotNumber: /^PLOT-\d{4}$/
+      }).sort({ plotNumber: -1 });
+      
+      let nextNumber = 1;
+      if (lastPlot && lastPlot.plotNumber) {
+        const lastNumber = parseInt(lastPlot.plotNumber.split('-')[1]);
+        nextNumber = lastNumber + 1;
+      }
+      
+      this.plotNumber = `PLOT-${String(nextNumber).padStart(4, '0')}`;
+    } catch (error) {
+      console.error('Error generating plot number:', error);
+    }
+  }
+  
+  // Calculate total price before saving
   if (this.area && this.pricePerSqFt) {
     this.totalPrice = this.area * this.pricePerSqFt;
   }

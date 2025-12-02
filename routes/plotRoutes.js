@@ -211,6 +211,26 @@ router.get('/', async (req, res) => {
   }
 });
 
+// Middleware to parse JSON stringified fields from FormData
+const parseFormData = (req, res, next) => {
+  if (req.body) {
+    Object.keys(req.body).forEach(key => {
+      if (typeof req.body[key] === 'string') {
+        try {
+          // Try to parse JSON strings (for objects like dimensions, sideMeasurements)
+          const parsed = JSON.parse(req.body[key]);
+          if (typeof parsed === 'object') {
+            req.body[key] = parsed;
+          }
+        } catch (e) {
+          // Not JSON, keep as is
+        }
+      }
+    });
+  }
+  next();
+};
+
 // @desc    Create plot
 // @route   POST /api/v1/plots
 // @access  Private (Admin, Manager)
@@ -220,6 +240,7 @@ router.post('/',
     { name: 'paymentSlip', maxCount: 1 },
     { name: 'registryDocument', maxCount: 1 }
   ]),
+  parseFormData,
   sanitizeRequest,
   validations.plot.create,
   handleValidationErrors,
@@ -284,6 +305,7 @@ router.put('/:id',
     { name: 'paymentSlip', maxCount: 1 },
     { name: 'registryDocument', maxCount: 1 }
   ]),
+  parseFormData,
   validations.params.objectId,
   sanitizeRequest,
   validations.plot.update,
