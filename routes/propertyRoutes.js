@@ -115,22 +115,51 @@ const parseArrayField = (value) => {
 }
 
 const buildMediaPayload = (files, existingMedia = {}) => {
-  const media = { ...existingMedia }
-  const fileToPath = (file) => `/uploads/properties/${path.basename(file.path)}`
+  console.log('🔧 buildMediaPayload called')
+  console.log('🔧 files:', files ? Object.keys(files) : 'null/undefined')
+  console.log('🔧 existingMedia:', existingMedia)
+  
+  if (!files || Object.keys(files).length === 0) {
+    console.log('⚠️ No files provided, returning existing media')
+    return existingMedia
+  }
+  
+  // Convert mongoose document to plain object if needed
+  const existingMediaPlain = existingMedia?.toObject ? existingMedia.toObject() : existingMedia
+  console.log('🔧 existingMediaPlain:', existingMediaPlain)
+  
+  // Start with a clean plain object
+  const media = {
+    mainPicture: existingMediaPlain.mainPicture || null,
+    videoUpload: existingMediaPlain.videoUpload || null,
+    mapImage: existingMediaPlain.mapImage || null,
+    noc: existingMediaPlain.noc || null,
+    registry: existingMediaPlain.registry || null,
+    legalDoc: existingMediaPlain.legalDoc || null,
+    moreImages: existingMediaPlain.moreImages || []
+  }
+  
+  const fileToPath = (file) => {
+    const filePath = `/uploads/properties/${path.basename(file.path)}`
+    console.log('🔧 Generated path:', filePath, 'from', file.path)
+    return filePath
+  }
 
   ;['mainPicture', 'videoUpload', 'mapImage', 'noc', 'registry', 'legalDoc'].forEach((key) => {
     if (files[key]?.[0]) {
       media[key] = fileToPath(files[key][0])
+      console.log(`✅ Added ${key}:`, media[key])
     }
   })
 
   if (files.moreImages?.length) {
-    const currentImages = existingMedia.moreImages || []
-    media.moreImages = [...currentImages, ...files.moreImages.map(fileToPath)]
-  } else if (!media.moreImages) {
-    media.moreImages = existingMedia.moreImages || []
+    const currentImages = media.moreImages || []
+    const newImages = files.moreImages.map(fileToPath)
+    media.moreImages = [...currentImages, ...newImages]
+    console.log('✅ Added moreImages:', newImages)
   }
 
+  console.log('🔧 Final media object (plain):', media)
   return media
 }
 
@@ -205,6 +234,12 @@ router.post(
 
     try {
       console.log('📥 Received property data:', req.body)
+      console.log('📁 Files received:', req.files ? Object.keys(req.files) : 'No files')
+      if (req.files) {
+        Object.keys(req.files).forEach(key => {
+          console.log(`  - ${key}: ${req.files[key].length} file(s)`)
+        })
+      }
       
       const facilities = parseArrayField(req.body.facilities)
       const amenities = parseArrayField(req.body.amenities)
@@ -251,6 +286,7 @@ router.post(
       }
       
       console.log('💾 Property data to save:', propertyData)
+      console.log('🖼️ Media in property data:', propertyData.media)
 
       const property = await Property.create(propertyData)
       await property.populate([
@@ -260,6 +296,7 @@ router.post(
       ])
 
       console.log('✅ Property created successfully:', property._id)
+      console.log('🖼️ Media saved in DB:', property.media)
 
       res.status(201).json({
         success: true,
@@ -330,11 +367,15 @@ router.put(
       }
 
       if (req.files && Object.keys(req.files).length > 0) {
-        property.media = buildMediaPayload(req.files, property.media || {})
+        const updatedMedia = buildMediaPayload(req.files, property.media || {})
+        console.log('🖼️ Setting property.media to:', updatedMedia)
+        property.media = updatedMedia
+        console.log('🖼️ property.media after assignment:', property.media)
       }
 
       await property.save()
       console.log('✅ Property updated successfully:', property._id)
+      console.log('🖼️ property.media after save:', property.media)
       
       await property.populate([
         { path: 'colony', select: 'name' },
