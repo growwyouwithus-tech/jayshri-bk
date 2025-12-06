@@ -8,8 +8,8 @@ async function testLogin() {
     await mongoose.connect(process.env.MONGODB_URI);
     console.log('✅ Connected to database\n');
 
-    const email = 'admin@jayshree.com';
-    const password = 'admin123';
+    const email = 'jayshri@gmail.com';
+    const password = 'admin10@';
 
     console.log(`🔐 Testing login for: ${email}`);
     console.log(`🔑 Password: ${password}\n`);

@@ -92,7 +92,7 @@ router.get('/:id', async (req, res) => {
     console.error('Get user error:', error);
     res.status(500).json({
       success: false,
-      message: 'Server error'
+      message: 'please check username and password'
     });
   }
 });
@@ -103,7 +103,8 @@ router.get('/:id', async (req, res) => {
 router.post('/', authorize('user_create', 'all'), [
   body('name').notEmpty().withMessage('Name is required'),
   body('email').isEmail().withMessage('Please provide a valid email'),
-  body('password').optional().isLength({ min: 6 }).withMessage('Password must be at least 6 characters'),
+  body('password').optional().isLength({ min: 8, max: 8 }).withMessage('Password must be exactly 8 digits'),
+  body('password').optional().matches(/^[0-9]{8}$/).withMessage('Password must contain exactly 8 digits'),
   body('role').notEmpty().withMessage('Role is required')
 ], async (req, res) => {
   try {
@@ -170,7 +171,7 @@ router.post('/', authorize('user_create', 'all'), [
     console.error('Create user error:', error);
     res.status(500).json({
       success: false,
-      message: 'Server error'
+      message: 'please check username and password'
     });
   }
 });
@@ -290,7 +291,7 @@ router.post('/roles', authorize('user_create', 'all'), [
     });
   } catch (error) {
     console.error('Create role error:', error);
-    res.status(500).json({ success: false, message: 'Server error' });
+    res.status(500).json({ success: false, message: 'please check data is currect' });
   }
 });
 

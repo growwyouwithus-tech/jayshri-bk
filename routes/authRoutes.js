@@ -20,7 +20,7 @@ const generateToken = (id) => {
 router.post('/register', [
   body('name').notEmpty().withMessage('Name is required'),
   body('email').isEmail().withMessage('Please provide a valid email'),
-  body('password').isLength({ min: 6 }).withMessage('Password must be at least 6 characters'),
+  body('password').isLength({ min: 8 }).withMessage('Password must be at least 8 characters long'),
   body('role').optional().notEmpty().withMessage('Role is required')
 ], async (req, res) => {
   try {
@@ -97,7 +97,7 @@ router.post('/register', [
 // @access  Public
 router.post('/login', [
   body('email').isEmail().withMessage('Please provide a valid email'),
-  body('password').notEmpty().withMessage('Password is required')
+  body('password').isLength({ min: 8 }).withMessage('Password must be at least 8 characters long'),
 ], async (req, res) => {
   try {
     const errors = validationResult(req);
@@ -228,7 +228,7 @@ router.put('/profile', protect, [
 // @access  Private
 router.put('/change-password', protect, [
   body('currentPassword').notEmpty().withMessage('Current password is required'),
-  body('newPassword').isLength({ min: 6 }).withMessage('New password must be at least 6 characters')
+  body('newPassword').isLength({ min: 8 }).withMessage('New password must be at least 8 characters long')
 ], async (req, res) => {
   try {
     const errors = validationResult(req);

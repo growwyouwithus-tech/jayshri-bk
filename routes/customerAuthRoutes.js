@@ -65,7 +65,8 @@ const protectCustomer = async (req, res, next) => {
 router.post('/register', [
   body('name').notEmpty().withMessage('Name is required'),
   body('email').isEmail().withMessage('Please provide a valid email'),
-  body('password').isLength({ min: 6 }).withMessage('Password must be at least 6 characters'),
+  body('password').isLength({ min: 8, max: 8 }).withMessage('Password must be exactly 8 digits'),
+  body('password').matches(/^[0-9]{8}$/).withMessage('Password must contain exactly 8 digits'),
   body('phone').notEmpty().withMessage('Phone is required')
 ], async (req, res) => {
   try {
@@ -297,7 +298,8 @@ router.put('/profile', protectCustomer, [
 // @access  Private (Customer)
 router.put('/change-password', protectCustomer, [
   body('currentPassword').notEmpty().withMessage('Current password is required'),
-  body('newPassword').isLength({ min: 6 }).withMessage('New password must be at least 6 characters')
+  body('newPassword').isLength({ min: 8, max: 8 }).withMessage('New password must be exactly 8 digits'),
+  body('newPassword').matches(/^[0-9]{8}$/).withMessage('New password must contain exactly 8 digits')
 ], async (req, res) => {
   try {
     const errors = validationResult(req);
@@ -520,7 +522,8 @@ router.post('/verify-otp', [
 router.post('/reset-password', [
   body('email').isEmail().withMessage('Please provide a valid email'),
   body('otp').isLength({ min: 6, max: 6 }).withMessage('OTP must be 6 digits'),
-  body('newPassword').isLength({ min: 6 }).withMessage('Password must be at least 6 characters')
+  body('newPassword').isLength({ min: 8, max: 8 }).withMessage('Password must be exactly 8 digits'),
+  body('newPassword').matches(/^[0-9]{8}$/).withMessage('Password must contain exactly 8 digits')
 ], async (req, res) => {
   try {
     const errors = validationResult(req);

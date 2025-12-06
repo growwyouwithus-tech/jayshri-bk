@@ -529,10 +529,8 @@ const validations = {
         .customSanitizer(sanitizers.sanitizePhone),
 
       body('password')
-        .isLength({ min: 6, max: 100 })
-        .withMessage('Password must be between 6 and 100 characters')
-        .matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/)
-        .withMessage('Password must contain at least one lowercase letter, one uppercase letter, and one number')
+        .isLength({ min: 8 })
+        .withMessage('Password must be at least 8 characters long')
     ],
 
     login: [
@@ -542,8 +540,8 @@ const validations = {
         .normalizeEmail(),
 
       body('password')
-        .notEmpty()
-        .withMessage('Password is required')
+        .isLength({ min: 8 })
+        .withMessage('Password must be at least 8 characters long')
     ]
   },
 
