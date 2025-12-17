@@ -83,6 +83,12 @@ const plotSchema = new mongoose.Schema({
     type: String,
     trim: true
   },
+  commissionPercentage: {
+    type: Number
+  },
+  commissionAmount: {
+    type: Number
+  },
   advocateName: {
     type: String,
     trim: true
