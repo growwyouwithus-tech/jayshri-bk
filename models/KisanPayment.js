@@ -2,37 +2,76 @@ const mongoose = require('mongoose')
 
 const kisanPaymentSchema = new mongoose.Schema(
   {
+    property: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Property',
+      required: [true, 'Property is required'],
+    },
     colony: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Colony',
       required: [true, 'Colony is required'],
     },
+    paymentType: {
+      type: String,
+      required: [true, 'Payment type is required'],
+      enum: ['CASH', 'BY CHEQUE', 'BY BANK TRANSFER'],
+      default: 'CASH',
+    },
+    rupees: {
+      type: Number,
+      required: [true, 'Rupees amount is required'],
+      min: [0, 'Amount cannot be negative'],
+    },
+    rupeesInWords: {
+      type: String,
+      trim: true,
+      default: '',
+    },
+    regPlotNo: {
+      type: String,
+      trim: true,
+      default: '',
+    },
+    gaj: {
+      type: Number,
+      default: 0,
+      min: [0, 'Gaj cannot be negative'],
+    },
+    remark: {
+      type: String,
+      trim: true,
+      default: '',
+    },
+    remainingLand: {
+      type: Number,
+      default: 0,
+    },
+    // Legacy fields for backward compatibility
     khatoniHolderName: {
       type: String,
       trim: true,
     },
     dateTime: {
       type: Date,
-      required: [true, 'Date and time is required'],
     },
     paidAmount: {
       type: Number,
-      required: [true, 'Paid amount is required'],
       min: [0, 'Amount cannot be negative'],
     },
     paymentMode: {
       type: String,
-      required: [true, 'Payment mode is required'],
       enum: ['CASH', 'CHEQUE', 'ONLINE', 'UPI', 'BANK TRANSFER'],
-      default: 'CASH',
     },
     hintsInWord: {
       type: String,
       trim: true,
-      default: '',
     },
-    // Payment Details (optional, based on payment mode)
     chequeNumber: {
+      type: String,
+      trim: true,
+    },
+    transactionId: {
       type: String,
       trim: true,
     },
@@ -76,6 +115,8 @@ const kisanPaymentSchema = new mongoose.Schema(
 // Index for faster queries
 kisanPaymentSchema.index({ dateTime: -1 })
 kisanPaymentSchema.index({ colony: 1 })
+kisanPaymentSchema.index({ property: 1 })
 kisanPaymentSchema.index({ paymentMode: 1 })
+kisanPaymentSchema.index({ paymentType: 1 })
 
 module.exports = mongoose.model('KisanPayment', kisanPaymentSchema)
