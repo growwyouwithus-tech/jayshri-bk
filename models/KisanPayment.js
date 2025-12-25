@@ -75,6 +75,14 @@ const kisanPaymentSchema = new mongoose.Schema(
       type: String,
       trim: true,
     },
+    voucherNo: {
+      type: String,
+      trim: true,
+    },
+    photoUrl: {
+      type: String,
+      trim: true,
+    },
     bankName: {
       type: String,
       trim: true,
