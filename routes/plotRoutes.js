@@ -35,7 +35,7 @@ const storage = multer.diskStorage({
   }
 });
 
-const upload = multer({ 
+const upload = multer({
   storage,
   limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
   fileFilter: (req, file, cb) => {
@@ -52,16 +52,16 @@ const upload = multer({
 // @desc    Get plots by colony (Public for user app)
 // @route   GET /api/v1/plots/colony/:colonyId
 // @access  Public
-router.get('/colony/:colonyId', 
+router.get('/colony/:colonyId',
   validations.params.colonyId,
   validations.query.plotFilters,
   handleValidationErrors,
   async (req, res) => {
     try {
       const { status, minPrice, maxPrice, minArea, maxArea, facing } = req.query;
-      
+
       const query = { colony: req.params.colonyId };
-      
+
       if (status) query.status = status;
       if (facing) query.facing = facing;
       if (minPrice || maxPrice) {
@@ -95,13 +95,13 @@ router.get('/colony/:colonyId',
 // @desc    Get plots by property (Public for user app)
 // @route   GET /api/v1/plots/property/:propertyId
 // @access  Public
-router.get('/property/:propertyId', 
+router.get('/property/:propertyId',
   async (req, res) => {
     try {
       const { status, minPrice, maxPrice, minArea, maxArea, facing } = req.query;
-      
+
       const query = { propertyId: req.params.propertyId };
-      
+
       if (status) query.status = status;
       if (facing) query.facing = facing;
       if (minPrice || maxPrice) {
@@ -136,7 +136,7 @@ router.get('/property/:propertyId',
 // @desc    Get plot by ID (Public for user app)
 // @route   GET /api/v1/plots/:id
 // @access  Public
-router.get('/:id', 
+router.get('/:id',
   validations.params.objectId,
   handleValidationErrors,
   async (req, res) => {
@@ -234,11 +234,12 @@ const parseFormData = (req, res, next) => {
 // @desc    Create plot
 // @route   POST /api/v1/plots
 // @access  Private (Admin, Manager)
-router.post('/', 
+router.post('/',
   authorize('plot_create', 'all'),
   upload.fields([
     { name: 'paymentSlip', maxCount: 1 },
-    { name: 'registryDocument', maxCount: 1 }
+    { name: 'registryDocument', maxCount: 10 },
+    { name: 'plotImages', maxCount: 10 }
   ]),
   parseFormData,
   sanitizeRequest,
@@ -275,17 +276,20 @@ router.post('/',
 
       // Add file paths if files were uploaded
       if (req.files) {
-        if (req.files.paymentSlip && req.files.paymentSlip[0]) {
-          plotData.paymentSlip = `/uploads/payment-slips/${path.basename(req.files.paymentSlip[0].path)}`;
+        if (req.files.paymentSlip) {
+          plotData.paymentSlip = `/uploads/payment-slips/${req.files.paymentSlip[0].filename}`;
         }
-        if (req.files.registryDocument && req.files.registryDocument[0]) {
-          plotData.registryDocument = `/uploads/payment-slips/${path.basename(req.files.registryDocument[0].path)}`;
+        if (req.files.registryDocument) {
+          plotData.registryDocument = req.files.registryDocument.map(file => `/uploads/registry-documents/${file.filename}`);
+        }
+        if (req.files.plotImages) {
+          plotData.plotImages = req.files.plotImages.map(file => `/uploads/plot-images/${file.filename}`);
         }
       }
 
-    const plot = await Plot.create(plotData);
-    await plot.populate({ path: 'colony', select: 'name city sellers' });
-    return sendSuccess(res, 201, 'Plot created successfully', { plot });
+      const plot = await Plot.create(plotData);
+      await plot.populate({ path: 'colony', select: 'name city sellers' });
+      return sendSuccess(res, 201, 'Plot created successfully', { plot });
     } catch (error) {
       console.error('Create plot error:', error);
       res.status(500).json({
@@ -299,11 +303,12 @@ router.post('/',
 // @desc    Update plot
 // @route   PUT /api/v1/plots/:id
 // @access  Private (Admin, Manager)
-router.put('/:id', 
+router.put('/:id',
   authorize('plot_update', 'all'),
   upload.fields([
     { name: 'paymentSlip', maxCount: 1 },
-    { name: 'registryDocument', maxCount: 1 }
+    { name: 'registryDocument', maxCount: 10 },
+    { name: 'plotImages', maxCount: 10 }
   ]),
   parseFormData,
   validations.params.objectId,
@@ -313,14 +318,18 @@ router.put('/:id',
   async (req, res) => {
     try {
       const updateData = { ...req.body };
-      
+
+      // Add file paths if files were uploaded
       // Add file paths if files were uploaded
       if (req.files) {
-        if (req.files.paymentSlip && req.files.paymentSlip[0]) {
-          updateData.paymentSlip = `/uploads/payment-slips/${path.basename(req.files.paymentSlip[0].path)}`;
+        if (req.files.paymentSlip) {
+          updateData.paymentSlip = `/uploads/payment-slips/${req.files.paymentSlip[0].filename}`;
         }
-        if (req.files.registryDocument && req.files.registryDocument[0]) {
-          updateData.registryDocument = `/uploads/payment-slips/${path.basename(req.files.registryDocument[0].path)}`;
+        if (req.files.registryDocument) {
+          updateData.registryDocument = req.files.registryDocument.map(file => `/uploads/registry-documents/${file.filename}`);
+        }
+        if (req.files.plotImages) {
+          updateData.plotImages = req.files.plotImages.map(file => `/uploads/plot-images/${file.filename}`);
         }
       }
 
@@ -337,7 +346,7 @@ router.put('/:id',
         });
       }
 
-    return sendSuccess(res, 200, 'Plot updated successfully', { plot });
+      return sendSuccess(res, 200, 'Plot updated successfully', { plot });
     } catch (error) {
       console.error('Update plot error:', error);
       res.status(500).json({
@@ -351,8 +360,8 @@ router.put('/:id',
 // @desc    Delete plot
 // @route   DELETE /api/v1/plots/:id
 // @access  Private (Admin)
-router.delete('/:id', 
-  authorize('plot_delete', 'all'), 
+router.delete('/:id',
+  authorize('plot_delete', 'all'),
   validations.params.objectId,
   handleValidationErrors,
   async (req, res) => {
@@ -376,7 +385,7 @@ router.delete('/:id',
 
       await plot.deleteOne();
 
-    return sendSuccess(res, 200, 'Plot deleted successfully');
+      return sendSuccess(res, 200, 'Plot deleted successfully');
     } catch (error) {
       console.error('Delete plot error:', error);
       res.status(500).json({
