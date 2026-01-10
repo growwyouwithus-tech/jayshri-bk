@@ -136,6 +136,14 @@ const plotSchema = new mongoose.Schema({
     enum: ['pending', 'completed'],
     default: 'pending'
   },
+  // Customer/Buyer Documents
+  customerDocuments: {
+    aadharFront: String,
+    aadharBack: String,
+    panCard: String,
+    passportPhoto: String,
+    fullPhoto: String
+  },
   corner: {
     type: Boolean,
     default: false

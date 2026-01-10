@@ -4,6 +4,7 @@ const { body, validationResult } = require('express-validator');
 const User = require('../models/User');
 const Role = require('../models/Role');
 const { protect, authorize } = require('../middleware/auth');
+const { uploadDocuments } = require('../middleware/upload');
 
 const router = express.Router();
 
@@ -16,9 +17,9 @@ router.use(protect);
 router.get('/', authorize('user_read', 'all'), async (req, res) => {
   try {
     const { page = 1, limit = 10, role, search, status } = req.query;
-    
+
     const query = {};
-    
+
     if (role) {
       if (mongoose.Types.ObjectId.isValid(role)) {
         query.role = role;
@@ -109,7 +110,7 @@ router.post('/', authorize('user_create', 'all'), [
 ], async (req, res) => {
   try {
     console.log('Create user request body:', req.body);
-    
+
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
       console.log('Validation errors:', errors.array());
@@ -155,7 +156,7 @@ router.post('/', authorize('user_create', 'all'), [
 
     // Populate role to ensure userCode is generated
     await user.populate('role');
-    
+
     // Save again to ensure userCode is generated if it wasn't on first save
     if (!user.userCode) {
       await user.save();
@@ -181,13 +182,10 @@ router.post('/', authorize('user_create', 'all'), [
 // @access  Private (Admin, Manager)
 router.put('/:id', authorize('user_update', 'all'), async (req, res) => {
   try {
-    const { name, phone, role, address, isActive } = req.body;
+    const { name, phone, role, address, isActive, password } = req.body;
 
-    const user = await User.findByIdAndUpdate(
-      req.params.id,
-      { name, phone, role, address, isActive },
-      { new: true, runValidators: true }
-    ).populate('role');
+    // Find user first
+    const user = await User.findById(req.params.id);
 
     if (!user) {
       return res.status(404).json({
@@ -195,6 +193,24 @@ router.put('/:id', authorize('user_update', 'all'), async (req, res) => {
         message: 'User not found'
       });
     }
+
+    // Update fields
+    if (name) user.name = name;
+    if (phone) user.phone = phone;
+    if (role) user.role = role;
+    if (address) user.address = address;
+    if (typeof isActive !== 'undefined') user.isActive = isActive;
+
+    // Update password if provided (will be hashed by pre-save hook)
+    if (password && password.trim()) {
+      user.password = password.trim();
+    }
+
+    // Save user (this triggers pre-save hooks including password hashing)
+    await user.save();
+
+    // Populate role for response
+    await user.populate('role');
 
     res.json({
       success: true,
@@ -343,6 +359,68 @@ router.delete('/roles/:id', authorize('user_delete', 'all'), async (req, res) =>
   } catch (error) {
     console.error('Delete role error:', error);
     res.status(500).json({ success: false, message: 'Server error' });
+  }
+});
+
+// @desc    Upload user documents
+// @route   POST /api/v1/users/:id/documents
+// @access  Private
+router.post('/:id/documents', uploadDocuments, async (req, res) => {
+  try {
+    const user = await User.findById(req.params.id);
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
+      });
+    }
+
+    // Check if user is updating their own documents or has permission
+    if (req.user._id.toString() !== req.params.id && !req.user.permissions.includes('user_update')) {
+      return res.status(403).json({
+        success: false,
+        message: 'Not authorized to update this user\'s documents'
+      });
+    }
+
+    // Initialize documents object if it doesn't exist
+    if (!user.documents) {
+      user.documents = {};
+    }
+
+    // Update document paths from uploaded files
+    if (req.files) {
+      if (req.files.aadharFront && req.files.aadharFront[0]) {
+        user.documents.aadharFront = `/uploads/documents/${req.files.aadharFront[0].filename}`;
+      }
+      if (req.files.aadharBack && req.files.aadharBack[0]) {
+        user.documents.aadharBack = `/uploads/documents/${req.files.aadharBack[0].filename}`;
+      }
+      if (req.files.panCard && req.files.panCard[0]) {
+        user.documents.panCard = `/uploads/documents/${req.files.panCard[0].filename}`;
+      }
+      if (req.files.passportPhoto && req.files.passportPhoto[0]) {
+        user.documents.passportPhoto = `/uploads/documents/${req.files.passportPhoto[0].filename}`;
+      }
+      if (req.files.fullPhoto && req.files.fullPhoto[0]) {
+        user.documents.fullPhoto = `/uploads/documents/${req.files.fullPhoto[0].filename}`;
+      }
+    }
+
+    await user.save();
+
+    res.json({
+      success: true,
+      message: 'Documents uploaded successfully',
+      data: user
+    });
+  } catch (error) {
+    console.error('Upload documents error:', error);
+    res.status(500).json({
+      success: false,
+      message: error.message || 'Server error'
+    });
   }
 });
 

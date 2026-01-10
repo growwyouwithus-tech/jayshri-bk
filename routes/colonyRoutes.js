@@ -3,6 +3,7 @@ const { body, validationResult } = require('express-validator');
 const Colony = require('../models/Colony');
 const Plot = require('../models/Plot');
 const { protect, authorize } = require('../middleware/auth');
+const { uploadDocuments } = require('../middleware/upload');
 
 const router = express.Router();
 
@@ -12,9 +13,9 @@ const router = express.Router();
 router.get('/', async (req, res) => {
   try {
     const { page = 1, limit = 10, city, search, status } = req.query;
-    
+
     const query = {};
-    
+
     if (city) query.city = city;
     if (status) query.status = status;
     if (search) {
@@ -132,7 +133,7 @@ router.post('/', authorize('colony_create', 'all'), [
     console.error('Create colony error:', error);
     console.error('Error details:', error.message);
     console.error('Error stack:', error.stack);
-    
+
     // Send detailed error in development
     res.status(500).json({
       success: false,
@@ -210,6 +211,69 @@ router.delete('/:id', authorize('colony_delete', 'all'), async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Server error'
+    });
+  }
+});
+
+// @desc    Upload khatoni holder documents
+// @route   POST /api/v1/colonies/:id/khatoni-holders/:holderIndex/documents
+// @access  Private (Admin, Manager)
+router.post('/:id/khatoni-holders/:holderIndex/documents', authorize('colony_update', 'all'), uploadDocuments, async (req, res) => {
+  try {
+    const colony = await Colony.findById(req.params.id);
+
+    if (!colony) {
+      return res.status(404).json({
+        success: false,
+        message: 'Colony not found'
+      });
+    }
+
+    const holderIndex = parseInt(req.params.holderIndex);
+
+    if (isNaN(holderIndex) || holderIndex < 0 || holderIndex >= colony.khatoniHolders.length) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid khatoni holder index'
+      });
+    }
+
+    // Initialize documents object if it doesn't exist
+    if (!colony.khatoniHolders[holderIndex].documents) {
+      colony.khatoniHolders[holderIndex].documents = {};
+    }
+
+    // Update document paths from uploaded files
+    if (req.files) {
+      if (req.files.aadharFront && req.files.aadharFront[0]) {
+        colony.khatoniHolders[holderIndex].documents.aadharFront = `/uploads/documents/${req.files.aadharFront[0].filename}`;
+      }
+      if (req.files.aadharBack && req.files.aadharBack[0]) {
+        colony.khatoniHolders[holderIndex].documents.aadharBack = `/uploads/documents/${req.files.aadharBack[0].filename}`;
+      }
+      if (req.files.panCard && req.files.panCard[0]) {
+        colony.khatoniHolders[holderIndex].documents.panCard = `/uploads/documents/${req.files.panCard[0].filename}`;
+      }
+      if (req.files.passportPhoto && req.files.passportPhoto[0]) {
+        colony.khatoniHolders[holderIndex].documents.passportPhoto = `/uploads/documents/${req.files.passportPhoto[0].filename}`;
+      }
+      if (req.files.fullPhoto && req.files.fullPhoto[0]) {
+        colony.khatoniHolders[holderIndex].documents.fullPhoto = `/uploads/documents/${req.files.fullPhoto[0].filename}`;
+      }
+    }
+
+    await colony.save();
+
+    res.json({
+      success: true,
+      message: 'Khatoni holder documents uploaded successfully',
+      data: { colony }
+    });
+  } catch (error) {
+    console.error('Upload khatoni holder documents error:', error);
+    res.status(500).json({
+      success: false,
+      message: error.message || 'Server error'
     });
   }
 });

@@ -114,7 +114,14 @@ const colonySchema = new mongoose.Schema({
       trim: true
     },
     address: String,
-    mobile: String
+    mobile: String,
+    documents: {
+      aadharFront: String,
+      aadharBack: String,
+      panCard: String,
+      passportPhoto: String,
+      fullPhoto: String
+    }
   }],
   nearbyPlaces: [{
     name: String,
@@ -131,15 +138,15 @@ const colonySchema = new mongoose.Schema({
 });
 
 // Update plot counts when plots are modified
-colonySchema.methods.updatePlotCounts = async function() {
+colonySchema.methods.updatePlotCounts = async function () {
   const Plot = mongoose.model('Plot');
   const plots = await Plot.find({ colony: this._id });
-  
+
   this.totalPlots = plots.length;
   this.availablePlots = plots.filter(plot => plot.status === 'available').length;
   this.soldPlots = plots.filter(plot => plot.status === 'sold').length;
   this.blockedPlots = plots.filter(plot => plot.status === 'blocked').length;
-  
+
   await this.save();
 };
 
