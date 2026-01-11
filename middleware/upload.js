@@ -1,35 +1,37 @@
 const multer = require('multer');
 const path = require('path');
-const fs = require('fs');
+const cloudinary = require('cloudinary').v2;
+const { CloudinaryStorage } = require('multer-storage-cloudinary');
 
-// Ensure uploads directory exists
-const uploadsDir = path.join(__dirname, '../uploads/documents');
-if (!fs.existsSync(uploadsDir)) {
-    fs.mkdirSync(uploadsDir, { recursive: true });
-}
+// Configure Cloudinary
+// Note: If these env vars are missing, uploads will fail, but the app won't crash on startup.
+cloudinary.config({
+    cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+    api_key: process.env.CLOUDINARY_API_KEY,
+    api_secret: process.env.CLOUDINARY_API_SECRET
+});
 
-// Configure storage
-const storage = multer.diskStorage({
-    destination: function (req, file, cb) {
-        cb(null, uploadsDir);
-    },
-    filename: function (req, file, cb) {
-        // Generate unique filename: fieldname-timestamp-randomstring.ext
-        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-        cb(null, file.fieldname + '-' + uniqueSuffix + path.extname(file.originalname));
+// Configure Storage
+const storage = new CloudinaryStorage({
+    cloudinary: cloudinary,
+    params: {
+        folder: 'jaishree-colony/documents',
+        allowed_formats: ['jpg', 'jpeg', 'png', 'pdf'],
+        // resource_type: 'auto' is important for PDFs
+        resource_type: 'auto'
     }
 });
 
-// File filter to accept only images
+// File filter (Optional as CloudinaryStorage has allowed_formats, but good for double checking)
 const fileFilter = (req, file, cb) => {
     const allowedTypes = /jpeg|jpg|png|pdf/;
     const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
     const mimetype = allowedTypes.test(file.mimetype);
 
     if (mimetype && extname) {
-        return cb(null, true);
+        cb(null, true);
     } else {
-        cb(new Error('Only image files (JPEG, JPG, PNG) and PDF are allowed!'));
+        cb(new Error('Only image files (JPEG, JPG, PNG) and PDF are allowed!'), false);
     }
 };
 
@@ -37,7 +39,7 @@ const fileFilter = (req, file, cb) => {
 const upload = multer({
     storage: storage,
     limits: {
-        fileSize: 1 * 1024 * 1024 // 1MB limit
+        fileSize: 5 * 1024 * 1024 // Increased to 5MB
     },
     fileFilter: fileFilter
 });

@@ -389,22 +389,22 @@ router.post('/:id/documents', uploadDocuments, async (req, res) => {
       user.documents = {};
     }
 
-    // Update document paths from uploaded files
+    // Update document paths from uploaded files (Cloudinary returns URL in .path)
     if (req.files) {
       if (req.files.aadharFront && req.files.aadharFront[0]) {
-        user.documents.aadharFront = `/uploads/documents/${req.files.aadharFront[0].filename}`;
+        user.documents.aadharFront = req.files.aadharFront[0].path;
       }
       if (req.files.aadharBack && req.files.aadharBack[0]) {
-        user.documents.aadharBack = `/uploads/documents/${req.files.aadharBack[0].filename}`;
+        user.documents.aadharBack = req.files.aadharBack[0].path;
       }
       if (req.files.panCard && req.files.panCard[0]) {
-        user.documents.panCard = `/uploads/documents/${req.files.panCard[0].filename}`;
+        user.documents.panCard = req.files.panCard[0].path;
       }
       if (req.files.passportPhoto && req.files.passportPhoto[0]) {
-        user.documents.passportPhoto = `/uploads/documents/${req.files.passportPhoto[0].filename}`;
+        user.documents.passportPhoto = req.files.passportPhoto[0].path;
       }
       if (req.files.fullPhoto && req.files.fullPhoto[0]) {
-        user.documents.fullPhoto = `/uploads/documents/${req.files.fullPhoto[0].filename}`;
+        user.documents.fullPhoto = req.files.fullPhoto[0].path;
       }
     }
 
