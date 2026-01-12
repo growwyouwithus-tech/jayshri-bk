@@ -28,7 +28,12 @@ const plotSchema = new mongoose.Schema({
   dimensions: {
     length: Number,
     width: Number,
-    frontage: Number
+    frontage: Number,
+    // Adjacent features (what's on each side)
+    front: String,
+    back: String,
+    left: String,
+    right: String
   },
   pricePerSqFt: {
     type: Number,
@@ -58,6 +63,14 @@ const plotSchema = new mongoose.Schema({
     trim: true
   },
   customerShortAddress: {
+    type: String,
+    trim: true
+  },
+  customerAadharNumber: {
+    type: String,
+    trim: true
+  },
+  customerPanNumber: {
     type: String,
     trim: true
   },

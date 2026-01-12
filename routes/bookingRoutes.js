@@ -15,15 +15,21 @@ router.use(protect);
 router.get('/', async (req, res) => {
   try {
     const { page = 1, limit = 10, status, buyer, plot } = req.query;
-    
+
     const query = {};
-    
+
     if (status) query.status = status;
     if (buyer) query.buyer = buyer;
     if (plot) query.plot = plot;
 
     const bookings = await Booking.find(query)
-      .populate('plot', 'plotNumber area totalPrice')
+      .populate({
+        path: 'plot',
+        populate: {
+          path: 'colony',
+          model: 'Colony'
+        }
+      })
       .populate('buyer', 'name email phone')
       .populate('agent', 'name email')
       .populate('createdBy', 'name email')
@@ -57,7 +63,13 @@ router.get('/', async (req, res) => {
 router.get('/:id', async (req, res) => {
   try {
     const booking = await Booking.findById(req.params.id)
-      .populate('plot')
+      .populate({
+        path: 'plot',
+        populate: {
+          path: 'colony',
+          model: 'Colony'
+        }
+      })
       .populate('buyer', 'name email phone address')
       .populate('agent', 'name email phone')
       .populate('createdBy', 'name email');
@@ -87,7 +99,7 @@ router.get('/:id', async (req, res) => {
 // @access  Private
 router.post('/', [
   body('plot').notEmpty().withMessage('Plot is required'),
-  body('buyer').notEmpty().withMessage('Buyer is required'),
+  // body('buyer').notEmpty().withMessage('Buyer is required'),
   body('totalAmount').isNumeric().withMessage('Total amount must be a number')
 ], async (req, res) => {
   try {

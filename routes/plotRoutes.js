@@ -4,6 +4,7 @@ const fs = require('fs');
 const path = require('path');
 const Plot = require('../models/Plot');
 const Colony = require('../models/Colony');
+const Booking = require('../models/Booking');
 const { protect, authorize } = require('../middleware/auth');
 const { sendSuccess, sendPaginated } = require('../middleware/responseHandler');
 const { validations, handleValidationErrors, sanitizeRequest } = require('../utils/validation');
@@ -338,6 +339,39 @@ router.put('/:id',
         updateData,
         { new: true, runValidators: true }
       ).populate({ path: 'colony', select: 'name city sellers' });
+
+      // Check if status is booked or sold, and create a booking record if one doesn't exist
+      if (plot && (plot.status === 'booked' || plot.status === 'sold')) {
+        // Check for existing booking for this plot
+        const existingBooking = await Booking.findOne({
+          plot: plot._id,
+          status: { $in: ['pending', 'confirmed', 'completed', 'approved'] }
+        });
+
+        if (!existingBooking) {
+          // Create new booking with manual customer details
+          const bookingData = {
+            plot: plot._id,
+            // (Optional) buyer: req.body.buyerId
+            customerDetails: {
+              name: plot.customerName,
+              phone: plot.customerNumber,
+              address: plot.customerShortAddress || plot.customerFullAddress,
+              aadharNumber: plot.customerAadharNumber,
+              panNumber: plot.customerPanNumber
+            },
+            totalAmount: plot.finalPrice || plot.totalPrice,
+            advanceAmount: plot.paidAmount || 0,
+            remainingAmount: (plot.finalPrice || plot.totalPrice) - (plot.paidAmount || 0),
+            status: plot.status === 'sold' ? 'completed' : 'pending',
+            bookingDate: plot.registryDate || Date.now(),
+            createdBy: req.user._id
+          };
+
+          await Booking.create(bookingData);
+          console.log(`Auto-created booking for plot ${plot.plotNumber}`);
+        }
+      }
 
       if (!plot) {
         return res.status(404).json({

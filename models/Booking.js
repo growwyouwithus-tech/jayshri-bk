@@ -14,7 +14,14 @@ const bookingSchema = new mongoose.Schema({
   buyer: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
-    required: [true, 'Buyer is required']
+    // required: [true, 'Buyer is required'] 
+  },
+  customerDetails: {
+    name: String,
+    phone: String,
+    address: String,
+    aadharNumber: String,
+    panNumber: String
   },
   agent: {
     type: mongoose.Schema.Types.ObjectId,
@@ -103,17 +110,17 @@ const bookingSchema = new mongoose.Schema({
 });
 
 // Generate booking number before saving
-bookingSchema.pre('save', async function(next) {
+bookingSchema.pre('save', async function (next) {
   if (this.isNew && !this.bookingNumber) {
     const count = await this.constructor.countDocuments();
     this.bookingNumber = `BK${String(count + 1).padStart(6, '0')}`;
   }
-  
+
   // Calculate remaining amount
   if (this.totalAmount && this.advanceAmount) {
     this.remainingAmount = this.totalAmount - this.advanceAmount;
   }
-  
+
   next();
 });
 

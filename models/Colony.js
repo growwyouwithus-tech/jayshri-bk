@@ -115,6 +115,14 @@ const colonySchema = new mongoose.Schema({
     },
     address: String,
     mobile: String,
+    aadharNumber: {
+      type: String,
+      trim: true
+    },
+    panNumber: {
+      type: String,
+      trim: true
+    },
     documents: {
       aadharFront: String,
       aadharBack: String,
