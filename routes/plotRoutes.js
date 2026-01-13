@@ -1,54 +1,13 @@
 const express = require('express');
-const multer = require('multer');
-const fs = require('fs');
-const path = require('path');
 const Plot = require('../models/Plot');
 const Colony = require('../models/Colony');
 const Booking = require('../models/Booking');
 const { protect, authorize } = require('../middleware/auth');
 const { sendSuccess, sendPaginated } = require('../middleware/responseHandler');
 const { validations, handleValidationErrors, sanitizeRequest } = require('../utils/validation');
+const { upload } = require('../middleware/upload'); // Import Cloudinary upload middleware
 
 const router = express.Router();
-
-// Configure multer for payment slip uploads
-const isServerless = Boolean(process.env.VERCEL || process.env.AWS_REGION || process.env.LAMBDA_TASK_ROOT);
-
-const paymentSlipUploadDir = isServerless
-  ? path.join('/tmp', 'uploads', 'payment-slips')
-  : path.join(__dirname, '../uploads/payment-slips');
-
-try {
-  if (!fs.existsSync(paymentSlipUploadDir)) {
-    fs.mkdirSync(paymentSlipUploadDir, { recursive: true });
-  }
-} catch (err) {
-  console.error('Could not create payment slip upload directory:', paymentSlipUploadDir, err.message);
-}
-
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, paymentSlipUploadDir);
-  },
-  filename: (req, file, cb) => {
-    const uniqueSuffix = `${Date.now()}-${Math.round(Math.random() * 1e9)}`;
-    cb(null, `payment-slip-${uniqueSuffix}${path.extname(file.originalname)}`);
-  }
-});
-
-const upload = multer({
-  storage,
-  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
-  fileFilter: (req, file, cb) => {
-    const allowedTypes = /jpeg|jpg|png|pdf/;
-    const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
-    const mimetype = allowedTypes.test(file.mimetype);
-    if (extname && mimetype) {
-      return cb(null, true);
-    }
-    cb(new Error('Only images (JPEG, PNG) and PDF files are allowed'));
-  }
-});
 
 // @desc    Get plots by colony (Public for user app)
 // @route   GET /api/v1/plots/colony/:colonyId
@@ -240,7 +199,12 @@ router.post('/',
   upload.fields([
     { name: 'paymentSlip', maxCount: 1 },
     { name: 'registryDocument', maxCount: 10 },
-    { name: 'plotImages', maxCount: 10 }
+    { name: 'plotImages', maxCount: 10 },
+    { name: 'customerAadharFront', maxCount: 1 },
+    { name: 'customerAadharBack', maxCount: 1 },
+    { name: 'customerPanCard', maxCount: 1 },
+    { name: 'customerPassportPhoto', maxCount: 1 },
+    { name: 'customerFullPhoto', maxCount: 1 }
   ]),
   parseFormData,
   sanitizeRequest,
@@ -275,16 +239,37 @@ router.post('/',
         createdBy: req.user._id
       };
 
-      // Add file paths if files were uploaded
+      // Add file paths if files were uploaded (Cloudinary URLs)
       if (req.files) {
         if (req.files.paymentSlip) {
-          plotData.paymentSlip = `/uploads/payment-slips/${req.files.paymentSlip[0].filename}`;
+          plotData.paymentSlip = req.files.paymentSlip[0].path; // Cloudinary URL
         }
         if (req.files.registryDocument) {
-          plotData.registryDocument = req.files.registryDocument.map(file => `/uploads/registry-documents/${file.filename}`);
+          plotData.registryDocument = req.files.registryDocument.map(file => file.path); // Cloudinary URLs
         }
         if (req.files.plotImages) {
-          plotData.plotImages = req.files.plotImages.map(file => `/uploads/plot-images/${file.filename}`);
+          plotData.plotImages = req.files.plotImages.map(file => file.path); // Cloudinary URLs
+        }
+        // Customer documents (Cloudinary URLs)
+        if (req.files.customerAadharFront) {
+          plotData.customerDocuments = plotData.customerDocuments || {};
+          plotData.customerDocuments.aadharFront = req.files.customerAadharFront[0].path;
+        }
+        if (req.files.customerAadharBack) {
+          plotData.customerDocuments = plotData.customerDocuments || {};
+          plotData.customerDocuments.aadharBack = req.files.customerAadharBack[0].path;
+        }
+        if (req.files.customerPanCard) {
+          plotData.customerDocuments = plotData.customerDocuments || {};
+          plotData.customerDocuments.panCard = req.files.customerPanCard[0].path;
+        }
+        if (req.files.customerPassportPhoto) {
+          plotData.customerDocuments = plotData.customerDocuments || {};
+          plotData.customerDocuments.passportPhoto = req.files.customerPassportPhoto[0].path;
+        }
+        if (req.files.customerFullPhoto) {
+          plotData.customerDocuments = plotData.customerDocuments || {};
+          plotData.customerDocuments.fullPhoto = req.files.customerFullPhoto[0].path;
         }
       }
 
@@ -309,7 +294,12 @@ router.put('/:id',
   upload.fields([
     { name: 'paymentSlip', maxCount: 1 },
     { name: 'registryDocument', maxCount: 10 },
-    { name: 'plotImages', maxCount: 10 }
+    { name: 'plotImages', maxCount: 10 },
+    { name: 'customerAadharFront', maxCount: 1 },
+    { name: 'customerAadharBack', maxCount: 1 },
+    { name: 'customerPanCard', maxCount: 1 },
+    { name: 'customerPassportPhoto', maxCount: 1 },
+    { name: 'customerFullPhoto', maxCount: 1 }
   ]),
   parseFormData,
   validations.params.objectId,
@@ -320,17 +310,38 @@ router.put('/:id',
     try {
       const updateData = { ...req.body };
 
-      // Add file paths if files were uploaded
-      // Add file paths if files were uploaded
+      // Add file paths if files were uploaded (Cloudinary URLs)
+      // Add file paths if files were uploaded (Cloudinary URLs)
       if (req.files) {
         if (req.files.paymentSlip) {
-          updateData.paymentSlip = `/uploads/payment-slips/${req.files.paymentSlip[0].filename}`;
+          updateData.paymentSlip = req.files.paymentSlip[0].path; // Cloudinary URL
         }
         if (req.files.registryDocument) {
-          updateData.registryDocument = req.files.registryDocument.map(file => `/uploads/registry-documents/${file.filename}`);
+          updateData.registryDocument = req.files.registryDocument.map(file => file.path); // Cloudinary URLs
         }
         if (req.files.plotImages) {
-          updateData.plotImages = req.files.plotImages.map(file => `/uploads/plot-images/${file.filename}`);
+          updateData.plotImages = req.files.plotImages.map(file => file.path); // Cloudinary URLs
+        }
+        // Customer documents (Cloudinary URLs)
+        if (req.files.customerAadharFront) {
+          updateData.customerDocuments = updateData.customerDocuments || {};
+          updateData.customerDocuments.aadharFront = req.files.customerAadharFront[0].path;
+        }
+        if (req.files.customerAadharBack) {
+          updateData.customerDocuments = updateData.customerDocuments || {};
+          updateData.customerDocuments.aadharBack = req.files.customerAadharBack[0].path;
+        }
+        if (req.files.customerPanCard) {
+          updateData.customerDocuments = updateData.customerDocuments || {};
+          updateData.customerDocuments.panCard = req.files.customerPanCard[0].path;
+        }
+        if (req.files.customerPassportPhoto) {
+          updateData.customerDocuments = updateData.customerDocuments || {};
+          updateData.customerDocuments.passportPhoto = req.files.customerPassportPhoto[0].path;
+        }
+        if (req.files.customerFullPhoto) {
+          updateData.customerDocuments = updateData.customerDocuments || {};
+          updateData.customerDocuments.fullPhoto = req.files.customerFullPhoto[0].path;
         }
       }
 

@@ -1,10 +1,8 @@
 const express = require('express')
 const { body, validationResult } = require('express-validator')
-const multer = require('multer')
-const fs = require('fs')
-const path = require('path')
 const Property = require('../models/Property')
 const { protect, authorize } = require('../middleware/auth')
+const { upload } = require('../middleware/upload')
 
 const router = express.Router()
 
@@ -15,7 +13,7 @@ router.get('/public', async (req, res) => {
   try {
     const { status } = req.query
     const query = {}
-    
+
     // Only filter by status if explicitly provided
     if (status) {
       query.status = status
@@ -58,40 +56,9 @@ router.get('/public/:id', async (req, res) => {
   }
 })
 
-// Determine a writable upload directory based on the runtime environment
-// In serverless platforms (e.g., Vercel / Netlify / AWS Lambda) the default working
-// directory is read-only. Only the /tmp directory is writable. We detect such
-// environments via common environment variables and always fall back to /tmp to
-// avoid ENOENT errors when attempting to create folders inside the read-only
-// function bundle path ("/var/task").
-const isServerless = Boolean(process.env.VERCEL || process.env.AWS_REGION || process.env.LAMBDA_TASK_ROOT)
 
-const mediaUploadDir = isServerless
-  ? path.join('/tmp', 'uploads', 'properties')
-  : path.join(__dirname, '../uploads/properties');
 
-// Ensure the directory exists (and is writable). Wrap in try/catch so that the
-// app still boots even if the directory cannot be created in a read-only
-// environment.
-try {
-  if (!fs.existsSync(mediaUploadDir)) {
-    fs.mkdirSync(mediaUploadDir, { recursive: true })
-  }
-} catch (err) {
-  console.error('Could not create media upload directory:', mediaUploadDir, err.message)
-}
 
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, mediaUploadDir)
-  },
-  filename: (req, file, cb) => {
-    const uniqueSuffix = `${Date.now()}-${Math.round(Math.random() * 1e9)}`
-    cb(null, `${uniqueSuffix}${path.extname(file.originalname)}`)
-  }
-})
-
-const upload = multer({ storage })
 
 const mediaFields = [
   { name: 'mainPicture', maxCount: 1 },
@@ -118,16 +85,16 @@ const buildMediaPayload = (files, existingMedia = {}) => {
   console.log('🔧 buildMediaPayload called')
   console.log('🔧 files:', files ? Object.keys(files) : 'null/undefined')
   console.log('🔧 existingMedia:', existingMedia)
-  
+
   if (!files || Object.keys(files).length === 0) {
     console.log('⚠️ No files provided, returning existing media')
     return existingMedia
   }
-  
+
   // Convert mongoose document to plain object if needed
   const existingMediaPlain = existingMedia?.toObject ? existingMedia.toObject() : existingMedia
   console.log('🔧 existingMediaPlain:', existingMediaPlain)
-  
+
   // Start with a clean plain object
   const media = {
     mainPicture: existingMediaPlain.mainPicture || null,
@@ -138,19 +105,20 @@ const buildMediaPayload = (files, existingMedia = {}) => {
     legalDoc: existingMediaPlain.legalDoc || null,
     moreImages: existingMediaPlain.moreImages || []
   }
-  
+
   const fileToPath = (file) => {
-    const filePath = `/uploads/properties/${path.basename(file.path)}`
-    console.log('🔧 Generated path:', filePath, 'from', file.path)
-    return filePath
+    // Cloudinary returns the URL in file.path
+    const cloudinaryUrl = file.path
+    console.log('🔧 Using Cloudinary URL:', cloudinaryUrl)
+    return cloudinaryUrl
   }
 
-  ;['mainPicture', 'videoUpload', 'mapImage', 'noc', 'registry', 'legalDoc'].forEach((key) => {
-    if (files[key]?.[0]) {
-      media[key] = fileToPath(files[key][0])
-      console.log(`✅ Added ${key}:`, media[key])
-    }
-  })
+    ;['mainPicture', 'videoUpload', 'mapImage', 'noc', 'registry', 'legalDoc'].forEach((key) => {
+      if (files[key]?.[0]) {
+        media[key] = fileToPath(files[key][0])
+        console.log(`✅ Added ${key}:`, media[key])
+      }
+    })
 
   if (files.moreImages?.length) {
     const currentImages = media.moreImages || []
@@ -240,7 +208,7 @@ router.post(
           console.log(`  - ${key}: ${req.files[key].length} file(s)`)
         })
       }
-      
+
       const facilities = parseArrayField(req.body.facilities)
       const amenities = parseArrayField(req.body.amenities)
       const roads = parseArrayField(req.body.roads)
@@ -253,7 +221,7 @@ router.post(
       const Colony = require('../models/Colony')
       const colonyId = req.body.colonyId || req.body.colony
       let totalLandAreaGaj = null
-      
+
       if (colonyId) {
         const colony = await Colony.findById(colonyId)
         if (colony) {
@@ -284,7 +252,7 @@ router.post(
         },
         createdBy: req.user._id
       }
-      
+
       console.log('💾 Property data to save:', propertyData)
       console.log('🖼️ Media in property data:', propertyData.media)
 
@@ -306,8 +274,8 @@ router.post(
     } catch (error) {
       console.error('❌ Create property error:', error)
       console.error('❌ Error details:', error.message)
-      res.status(500).json({ 
-        success: false, 
+      res.status(500).json({
+        success: false,
         message: error.message || 'Server error',
         error: process.env.NODE_ENV === 'development' ? error.message : undefined
       })
@@ -323,7 +291,7 @@ router.put(
     try {
       console.log('📥 Updating property:', req.params.id)
       console.log('📝 Update data:', req.body)
-      
+
       const property = await Property.findById(req.params.id)
       if (!property) {
         return res.status(404).json({ success: false, message: 'Property not found' })
@@ -376,7 +344,7 @@ router.put(
       await property.save()
       console.log('✅ Property updated successfully:', property._id)
       console.log('🖼️ property.media after save:', property.media)
-      
+
       await property.populate([
         { path: 'colony', select: 'name' },
         { path: 'city', select: 'name state' },

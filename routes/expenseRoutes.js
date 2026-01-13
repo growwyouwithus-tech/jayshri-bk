@@ -1,44 +1,9 @@
 const express = require('express')
 const router = express.Router()
-const multer = require('multer')
-const path = require('path')
-const fs = require('fs')
 const Expense = require('../models/Expense')
 const { protect, authorize } = require('../middleware/auth')
 const { sendSuccess, sendError } = require('../middleware/responseHandler')
-
-// Configure multer for bill file uploads
-const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    const uploadDir = 'uploads/bills'
-    if (!fs.existsSync(uploadDir)) {
-      fs.mkdirSync(uploadDir, { recursive: true })
-    }
-    cb(null, uploadDir)
-  },
-  filename: function (req, file, cb) {
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9)
-    cb(null, 'bill-' + uniqueSuffix + path.extname(file.originalname))
-  }
-})
-
-const fileFilter = (req, file, cb) => {
-  const allowedTypes = /pdf|jpg|jpeg|png/
-  const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase())
-  const mimetype = allowedTypes.test(file.mimetype)
-
-  if (mimetype && extname) {
-    return cb(null, true)
-  } else {
-    cb(new Error('Only PDF, JPG, JPEG, and PNG files are allowed'))
-  }
-}
-
-const upload = multer({
-  storage: storage,
-  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
-  fileFilter: fileFilter
-})
+const { upload } = require('../middleware/upload') // Import Cloudinary upload middleware
 
 // Get all expenses with filters
 router.get('/', protect, authorize(['Admin', 'Manager']), async (req, res) => {
@@ -127,7 +92,7 @@ router.post('/', protect, authorize(['Admin', 'Manager']), upload.single('billFi
     }
 
     if (req.file) {
-      expenseData.billUrl = `/uploads/bills/${req.file.filename}`
+      expenseData.billUrl = req.file.path // Cloudinary URL
     }
 
     const expense = await Expense.create(expenseData)
@@ -168,13 +133,8 @@ router.put('/:id', protect, authorize(['Admin', 'Manager']), upload.single('bill
     if (req.body.remarks !== undefined) expense.remarks = req.body.remarks
 
     if (req.file) {
-      if (expense.billUrl) {
-        const oldFilePath = path.join(__dirname, '..', expense.billUrl)
-        if (fs.existsSync(oldFilePath)) {
-          fs.unlinkSync(oldFilePath)
-        }
-      }
-      expense.billUrl = `/uploads/bills/${req.file.filename}`
+      // Note: Old Cloudinary files should be deleted via Cloudinary API if needed
+      expense.billUrl = req.file.path // Cloudinary URL
     }
 
     expense.updatedBy = req.user._id

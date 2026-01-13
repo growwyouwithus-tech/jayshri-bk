@@ -1,5 +1,6 @@
 const express = require('express');
 const { protect, authorize } = require('../middleware/auth');
+const { uploadDocuments } = require('../middleware/upload'); // Import upload middleware
 
 const router = express.Router();
 
@@ -45,27 +46,95 @@ router.get('/', async (req, res) => {
   }
 });
 
-// @desc    Update application settings
-// @route   PUT /api/v1/settings
+// @desc    Update company settings
+// @route   PUT /api/v1/settings/company
 // @access  Private (Admin only)
-router.put('/', authorize('settings_update', 'all'), async (req, res) => {
-  try {
-    // In a real application, you would save these to a database
-    // For now, we'll just return the updated settings
-    const updatedSettings = req.body;
+router.put('/company',
+  authorize('settings_update', 'all'),
+  uploadDocuments,
+  async (req, res) => {
+    try {
+      const updatedSettings = req.body;
 
-    res.json({
-      success: true,
-      message: 'Settings updated successfully',
-      data: updatedSettings
-    });
-  } catch (error) {
-    console.error('Update settings error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Server error'
-    });
-  }
-});
+      // Handle uploaded documents (Cloudinary URLs)
+      if (req.files) {
+        updatedSettings.ownerDocuments = updatedSettings.ownerDocuments || {};
+        if (req.files.aadharFront) {
+          updatedSettings.ownerDocuments.aadharFront = req.files.aadharFront[0].path;
+        }
+        if (req.files.aadharBack) {
+          updatedSettings.ownerDocuments.aadharBack = req.files.aadharBack[0].path;
+        }
+        if (req.files.panCard) {
+          updatedSettings.ownerDocuments.panCard = req.files.panCard[0].path;
+        }
+        if (req.files.passportPhoto) {
+          updatedSettings.ownerDocuments.passportPhoto = req.files.passportPhoto[0].path;
+        }
+        if (req.files.fullPhoto) {
+          updatedSettings.ownerDocuments.fullPhoto = req.files.fullPhoto[0].path;
+        }
+      }
+
+      // Add logo handling if uploaded
+      // Note: uploadDocuments middleware needs to include 'logo' field if we want to support logo upload here
+      // But standard implementation usually separates 'document' uploads from 'image' uploads
+      // For now, consistent with existing logic.
+
+      res.json({
+        success: true,
+        message: 'Company settings updated successfully',
+        data: updatedSettings
+      });
+    } catch (error) {
+      console.error('Update company settings error:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Server error'
+      });
+    }
+  });
+
+// @desc    Update system settings
+// @route   PUT /api/v1/settings/system
+// @access  Private (Admin only)
+router.put('/system',
+  authorize('settings_update', 'all'),
+  async (req, res) => {
+    try {
+      res.json({
+        success: true,
+        message: 'System settings updated successfully',
+        data: req.body
+      });
+    } catch (error) {
+      console.error('Update system settings error:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Server error'
+      });
+    }
+  });
+
+// @desc    Update payment settings
+// @route   PUT /api/v1/settings/payment
+// @access  Private (Admin only)
+router.put('/payment',
+  authorize('settings_update', 'all'),
+  async (req, res) => {
+    try {
+      res.json({
+        success: true,
+        message: 'Payment settings updated successfully',
+        data: req.body
+      });
+    } catch (error) {
+      console.error('Update payment settings error:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Server error'
+      });
+    }
+  });
 
 module.exports = router;

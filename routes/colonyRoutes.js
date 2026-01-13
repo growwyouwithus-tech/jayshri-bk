@@ -97,85 +97,133 @@ router.use(protect);
 // @desc    Create colony
 // @route   POST /api/v1/colonies
 // @access  Private (Admin, Manager)
-router.post('/', authorize('colony_create', 'all'), [
-  body('name').notEmpty().withMessage('Colony name is required'),
-  body('totalArea').optional().isNumeric().withMessage('Total area must be a number'),
-  body('pricePerSqFt').optional().isNumeric().withMessage('Price per sq ft must be a number'),
-  body('coordinates.latitude').optional().isNumeric().withMessage('Latitude must be numeric'),
-  body('coordinates.longitude').optional().isNumeric().withMessage('Longitude must be numeric')
-], async (req, res) => {
-  try {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return res.status(400).json({
+router.post('/',
+  authorize('colony_create', 'all'),
+  uploadDocuments, // Add upload middleware
+  [
+    body('name').notEmpty().withMessage('Colony name is required'),
+    body('totalArea').optional().isNumeric().withMessage('Total area must be a number'),
+    body('pricePerSqFt').optional().isNumeric().withMessage('Price per sq ft must be a number'),
+    body('coordinates.latitude').optional().isNumeric().withMessage('Latitude must be numeric'),
+    body('coordinates.longitude').optional().isNumeric().withMessage('Longitude must be numeric')
+  ], async (req, res) => {
+    try {
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) {
+        return res.status(400).json({
+          success: false,
+          message: 'Validation errors',
+          errors: errors.array()
+        });
+      }
+
+      const colonyData = {
+        ...req.body,
+        createdBy: req.user._id
+      };
+
+      // Handle uploaded documents (Cloudinary URLs)
+      if (req.files) {
+        colonyData.khatoniDocuments = colonyData.khatoniDocuments || {};
+        if (req.files.aadharFront) {
+          colonyData.khatoniDocuments.aadharFront = req.files.aadharFront[0].path; // Cloudinary URL
+        }
+        if (req.files.aadharBack) {
+          colonyData.khatoniDocuments.aadharBack = req.files.aadharBack[0].path; // Cloudinary URL
+        }
+        if (req.files.panCard) {
+          colonyData.khatoniDocuments.panCard = req.files.panCard[0].path; // Cloudinary URL
+        }
+        if (req.files.passportPhoto) {
+          colonyData.khatoniDocuments.passportPhoto = req.files.passportPhoto[0].path; // Cloudinary URL
+        }
+        if (req.files.fullPhoto) {
+          colonyData.khatoniDocuments.fullPhoto = req.files.fullPhoto[0].path; // Cloudinary URL
+        }
+      }
+
+      const colony = await Colony.create(colonyData);
+      await colony.populate('city', 'name state');
+
+      res.status(201).json({
+        success: true,
+        message: 'Colony created successfully',
+        data: {
+          colony: colony
+        }
+      });
+    } catch (error) {
+      console.error('Create colony error:', error);
+      console.error('Error details:', error.message);
+      console.error('Error stack:', error.stack);
+
+      // Send detailed error in development
+      res.status(500).json({
         success: false,
-        message: 'Validation errors',
-        errors: errors.array()
+        message: error.message || 'Server error',
+        error: process.env.NODE_ENV === 'development' ? error.message : 'Server error'
       });
     }
-
-    const colonyData = {
-      ...req.body,
-      createdBy: req.user._id
-    };
-
-    const colony = await Colony.create(colonyData);
-    await colony.populate('city', 'name state');
-
-    res.status(201).json({
-      success: true,
-      message: 'Colony created successfully',
-      data: {
-        colony: colony
-      }
-    });
-  } catch (error) {
-    console.error('Create colony error:', error);
-    console.error('Error details:', error.message);
-    console.error('Error stack:', error.stack);
-
-    // Send detailed error in development
-    res.status(500).json({
-      success: false,
-      message: error.message || 'Server error',
-      error: process.env.NODE_ENV === 'development' ? error.message : 'Server error'
-    });
-  }
-});
+  });
 
 // @desc    Update colony
 // @route   PUT /api/v1/colonies/:id
 // @access  Private (Admin, Manager)
-router.put('/:id', authorize('colony_update', 'all'), async (req, res) => {
-  try {
-    const colony = await Colony.findByIdAndUpdate(
-      req.params.id,
-      req.body,
-      { new: true, runValidators: true }
-    ).populate('city', 'name state');
+router.put('/:id',
+  authorize('colony_update', 'all'),
+  uploadDocuments, // Add upload middleware
+  async (req, res) => {
+    try {
+      const updateData = { ...req.body };
 
-    if (!colony) {
-      return res.status(404).json({
+      // Handle uploaded documents (Cloudinary URLs)
+      if (req.files) {
+        updateData.khatoniDocuments = updateData.khatoniDocuments || {};
+        if (req.files.aadharFront) {
+          updateData.khatoniDocuments.aadharFront = req.files.aadharFront[0].path; // Cloudinary URL
+        }
+        if (req.files.aadharBack) {
+          updateData.khatoniDocuments.aadharBack = req.files.aadharBack[0].path; // Cloudinary URL
+        }
+        if (req.files.panCard) {
+          updateData.khatoniDocuments.panCard = req.files.panCard[0].path; // Cloudinary URL
+        }
+        if (req.files.passportPhoto) {
+          updateData.khatoniDocuments.passportPhoto = req.files.passportPhoto[0].path; // Cloudinary URL
+        }
+        if (req.files.fullPhoto) {
+          updateData.khatoniDocuments.fullPhoto = req.files.fullPhoto[0].path; // Cloudinary URL
+        }
+      }
+
+      const colony = await Colony.findByIdAndUpdate(
+        req.params.id,
+        updateData,
+        { new: true, runValidators: true }
+      ).populate('city', 'name state');
+
+      if (!colony) {
+        return res.status(404).json({
+          success: false,
+          message: 'Colony not found'
+        });
+      }
+
+      res.json({
+        success: true,
+        message: 'Colony updated successfully',
+        data: {
+          colony: colony
+        }
+      });
+    } catch (error) {
+      console.error('Update colony error:', error);
+      res.status(500).json({
         success: false,
-        message: 'Colony not found'
+        message: 'Server error'
       });
     }
-
-    res.json({
-      success: true,
-      message: 'Colony updated successfully',
-      data: {
-        colony: colony
-      }
-    });
-  } catch (error) {
-    console.error('Update colony error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Server error'
-    });
-  }
-});
+  });
 
 // @desc    Delete colony
 // @route   DELETE /api/v1/colonies/:id
