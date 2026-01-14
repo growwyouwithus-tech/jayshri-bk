@@ -144,6 +144,9 @@ const plotSchema = new mongoose.Schema({
   registryDocument: [{
     type: String // URL to the uploaded registry document
   }],
+  registryPdf: {
+    type: String // URL to the uploaded registry PDF
+  },
   registryStatus: {
     type: String,
     enum: ['pending', 'completed'],

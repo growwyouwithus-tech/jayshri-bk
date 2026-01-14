@@ -198,7 +198,8 @@ router.post('/',
   authorize('plot_create', 'all'),
   upload.fields([
     { name: 'paymentSlip', maxCount: 1 },
-    { name: 'registryDocument', maxCount: 10 },
+    { name: 'registryDocument', maxCount: 20 },
+    { name: 'registryPdf', maxCount: 1 },
     { name: 'plotImages', maxCount: 10 },
     { name: 'customerAadharFront', maxCount: 1 },
     { name: 'customerAadharBack', maxCount: 1 },
@@ -247,6 +248,9 @@ router.post('/',
         if (req.files.registryDocument) {
           plotData.registryDocument = req.files.registryDocument.map(file => file.path); // Cloudinary URLs
         }
+        if (req.files.registryPdf) {
+          plotData.registryPdf = req.files.registryPdf[0].path;
+        }
         if (req.files.plotImages) {
           plotData.plotImages = req.files.plotImages.map(file => file.path); // Cloudinary URLs
         }
@@ -293,7 +297,8 @@ router.put('/:id',
   authorize('plot_update', 'all'),
   upload.fields([
     { name: 'paymentSlip', maxCount: 1 },
-    { name: 'registryDocument', maxCount: 10 },
+    { name: 'registryDocument', maxCount: 20 },
+    { name: 'registryPdf', maxCount: 1 },
     { name: 'plotImages', maxCount: 10 },
     { name: 'customerAadharFront', maxCount: 1 },
     { name: 'customerAadharBack', maxCount: 1 },
@@ -318,6 +323,9 @@ router.put('/:id',
         }
         if (req.files.registryDocument) {
           updateData.registryDocument = req.files.registryDocument.map(file => file.path); // Cloudinary URLs
+        }
+        if (req.files.registryPdf) {
+          updateData.registryPdf = req.files.registryPdf[0].path;
         }
         if (req.files.plotImages) {
           updateData.plotImages = req.files.plotImages.map(file => file.path); // Cloudinary URLs
