@@ -316,41 +316,102 @@ router.put('/:id',
       const updateData = { ...req.body };
 
       // Add file paths if files were uploaded (Cloudinary URLs)
+      const files = req.files || {};
+
       // Add file paths if files were uploaded (Cloudinary URLs)
-      if (req.files) {
-        if (req.files.paymentSlip) {
-          updateData.paymentSlip = req.files.paymentSlip[0].path; // Cloudinary URL
+      if (files.paymentSlip) {
+        updateData.paymentSlip = files.paymentSlip[0].path; // Cloudinary URL
+      }
+
+      if (files.registryDocument || req.body.existingRegistryDocuments) {
+        const newFiles = files.registryDocument ? files.registryDocument.map(file => file.path) : [];
+
+        let existingDocs = [];
+        if (req.body.existingRegistryDocuments) {
+          try {
+            existingDocs = JSON.parse(req.body.existingRegistryDocuments);
+            if (!Array.isArray(existingDocs)) existingDocs = [existingDocs];
+          } catch (e) {
+            existingDocs = [req.body.existingRegistryDocuments];
+          }
         }
-        if (req.files.registryDocument) {
-          updateData.registryDocument = req.files.registryDocument.map(file => file.path); // Cloudinary URLs
+
+        // Legacy case
+        if (req.body.registryDocument && existingDocs.length === 0) {
+          if (Array.isArray(req.body.registryDocument)) {
+            existingDocs = req.body.registryDocument;
+          } else {
+            existingDocs = [req.body.registryDocument];
+          }
         }
-        if (req.files.registryPdf) {
-          updateData.registryPdf = req.files.registryPdf[0].path;
+
+        // CRITICAL FIX: Aggressively flatten any nested arrays and ensure only URL strings
+        const flattenArray = (arr) => {
+          return arr.flat(Infinity).filter(item => item && typeof item === 'string' && item.startsWith('http'));
+        };
+
+        const flatExistingDocs = flattenArray(existingDocs);
+        const flatNewFiles = flattenArray(newFiles);
+
+        updateData.registryDocument = [...flatExistingDocs, ...flatNewFiles];
+      }
+
+      if (files.registryPdf) {
+        updateData.registryPdf = files.registryPdf[0].path;
+      }
+
+      if (files.plotImages || req.body.existingPlotImages) {
+        const newFiles = files.plotImages ? files.plotImages.map(file => file.path) : [];
+
+        let existingImages = [];
+        if (req.body.existingPlotImages) {
+          try {
+            existingImages = JSON.parse(req.body.existingPlotImages);
+            if (!Array.isArray(existingImages)) existingImages = [existingImages];
+          } catch (e) {
+            existingImages = [req.body.existingPlotImages];
+          }
         }
-        if (req.files.plotImages) {
-          updateData.plotImages = req.files.plotImages.map(file => file.path); // Cloudinary URLs
+        // Legacy fallback
+        if (req.body.plotImages && existingImages.length === 0) {
+          if (Array.isArray(req.body.plotImages)) {
+            existingImages = req.body.plotImages;
+          } else {
+            existingImages = [req.body.plotImages];
+          }
         }
-        // Customer documents (Cloudinary URLs)
-        if (req.files.customerAadharFront) {
-          updateData.customerDocuments = updateData.customerDocuments || {};
-          updateData.customerDocuments.aadharFront = req.files.customerAadharFront[0].path;
-        }
-        if (req.files.customerAadharBack) {
-          updateData.customerDocuments = updateData.customerDocuments || {};
-          updateData.customerDocuments.aadharBack = req.files.customerAadharBack[0].path;
-        }
-        if (req.files.customerPanCard) {
-          updateData.customerDocuments = updateData.customerDocuments || {};
-          updateData.customerDocuments.panCard = req.files.customerPanCard[0].path;
-        }
-        if (req.files.customerPassportPhoto) {
-          updateData.customerDocuments = updateData.customerDocuments || {};
-          updateData.customerDocuments.passportPhoto = req.files.customerPassportPhoto[0].path;
-        }
-        if (req.files.customerFullPhoto) {
-          updateData.customerDocuments = updateData.customerDocuments || {};
-          updateData.customerDocuments.fullPhoto = req.files.customerFullPhoto[0].path;
-        }
+
+        // CRITICAL FIX: Aggressively flatten any nested arrays and ensure only URL strings
+        const flattenArray = (arr) => {
+          return arr.flat(Infinity).filter(item => item && typeof item === 'string' && item.startsWith('http'));
+        };
+
+        const flatExistingImages = flattenArray(existingImages);
+        const flatNewFiles = flattenArray(newFiles);
+
+        updateData.plotImages = [...flatExistingImages, ...flatNewFiles];
+      }
+
+      // Customer documents (Cloudinary URLs)
+      if (files.customerAadharFront) {
+        updateData.customerDocuments = updateData.customerDocuments || {};
+        updateData.customerDocuments.aadharFront = files.customerAadharFront[0].path;
+      }
+      if (files.customerAadharBack) {
+        updateData.customerDocuments = updateData.customerDocuments || {};
+        updateData.customerDocuments.aadharBack = files.customerAadharBack[0].path;
+      }
+      if (files.customerPanCard) {
+        updateData.customerDocuments = updateData.customerDocuments || {};
+        updateData.customerDocuments.panCard = files.customerPanCard[0].path;
+      }
+      if (files.customerPassportPhoto) {
+        updateData.customerDocuments = updateData.customerDocuments || {};
+        updateData.customerDocuments.passportPhoto = files.customerPassportPhoto[0].path;
+      }
+      if (files.customerFullPhoto) {
+        updateData.customerDocuments = updateData.customerDocuments || {};
+        updateData.customerDocuments.fullPhoto = files.customerFullPhoto[0].path;
       }
 
       const plot = await Plot.findByIdAndUpdate(
@@ -404,7 +465,8 @@ router.put('/:id',
       console.error('Update plot error:', error);
       res.status(500).json({
         success: false,
-        message: 'Server error'
+        message: error.message,
+        stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
       });
     }
   }

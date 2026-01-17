@@ -1,4 +1,5 @@
-const express = require('express');
+const express = require('express')
+console.log('🔄 Server Restarting...');
 const mongoose = require('mongoose');
 const cors = require('cors');
 const helmet = require('helmet');
@@ -61,7 +62,7 @@ app.use('/uploads', (req, res, next) => {
 // Database connection with retry logic
 const connectDB = async () => {
   let retries = 5;
-  
+
   while (retries) {
     try {
       const conn = await mongoose.connect(process.env.MONGODB_URI, {
@@ -80,12 +81,12 @@ const connectDB = async () => {
       retries -= 1;
       console.error(`❌ Database connection error: ${error.message}`);
       console.log(`⏳ Retrying connection... (${retries} attempts remaining)`);
-      
+
       if (retries === 0) {
         console.error('❌ Failed to connect to MongoDB after 5 attempts');
         process.exit(1);
       }
-      
+
       // Wait 5 seconds before retrying
       await new Promise(resolve => setTimeout(resolve, 5000));
     }

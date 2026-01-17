@@ -1,6 +1,7 @@
 const express = require('express');
 const { protect, authorize } = require('../middleware/auth');
 const { uploadDocuments } = require('../middleware/upload'); // Import upload middleware
+const Settings = require('../models/Settings'); // Import Settings model
 
 const router = express.Router();
 
@@ -12,26 +13,7 @@ router.use(protect);
 // @access  Private
 router.get('/', async (req, res) => {
   try {
-    const settings = {
-      company: {
-        name: 'Jayshri Group',
-        email: 'admin@jayshree.com',
-        phone: '+91 9876543210',
-        address: 'Jayshri Group Office, City, State',
-        website: 'https://jayshrigroup.com'
-      },
-      features: {
-        enableNotifications: true,
-        enableCommissions: true,
-        enableRegistry: true,
-        enableReports: true
-      },
-      defaults: {
-        currency: 'INR',
-        dateFormat: 'DD/MM/YYYY',
-        timezone: 'Asia/Kolkata'
-      }
-    };
+    const settings = await Settings.getInstance();
 
     res.json({
       success: true,
@@ -54,43 +36,99 @@ router.put('/company',
   uploadDocuments,
   async (req, res) => {
     try {
-      const updatedSettings = req.body;
+      // Get the singleton settings instance
+      const settings = await Settings.getInstance();
 
-      // Handle uploaded documents (Cloudinary URLs)
-      if (req.files) {
-        updatedSettings.ownerDocuments = updatedSettings.ownerDocuments || {};
-        if (req.files.aadharFront) {
-          updatedSettings.ownerDocuments.aadharFront = req.files.aadharFront[0].path;
-        }
-        if (req.files.aadharBack) {
-          updatedSettings.ownerDocuments.aadharBack = req.files.aadharBack[0].path;
-        }
-        if (req.files.panCard) {
-          updatedSettings.ownerDocuments.panCard = req.files.panCard[0].path;
-        }
-        if (req.files.passportPhoto) {
-          updatedSettings.ownerDocuments.passportPhoto = req.files.passportPhoto[0].path;
-        }
-        if (req.files.fullPhoto) {
-          updatedSettings.ownerDocuments.fullPhoto = req.files.fullPhoto[0].path;
+      // Update company fields
+      if (req.body.companyName) settings.companyName = req.body.companyName;
+      if (req.body.email) settings.email = req.body.email;
+      if (req.body.phone) settings.phone = req.body.phone;
+      if (req.body.address) settings.address = req.body.address;
+      if (req.body.website) settings.website = req.body.website;
+      if (req.body.gstNumber) settings.gstNumber = req.body.gstNumber;
+      if (req.body.panNumber) settings.panNumber = req.body.panNumber;
+
+      // Handle owners array
+      if (req.body.owners) {
+        try {
+          const ownersData = typeof req.body.owners === 'string'
+            ? JSON.parse(req.body.owners)
+            : req.body.owners;
+
+          // Initialize owners array if it doesn't exist
+          if (!settings.owners) {
+            settings.owners = [];
+          }
+
+          // Update owners with data from request
+          settings.owners = ownersData.map((ownerData, index) => {
+            // Get existing owner or create new one
+            const existingOwner = settings.owners[index] || {};
+
+            return {
+              _id: existingOwner._id, // Preserve _id if exists
+              name: ownerData.name || existingOwner.name || '',
+              phone: ownerData.phone || existingOwner.phone || '',
+              aadharNumber: ownerData.aadharNumber || existingOwner.aadharNumber || '',
+              panNumber: ownerData.panNumber || existingOwner.panNumber || '',
+              documents: existingOwner.documents || {}
+            };
+          });
+
+        } catch (e) {
+          console.error('Error parsing owners data:', e);
         }
       }
 
-      // Add logo handling if uploaded
-      // Note: uploadDocuments middleware needs to include 'logo' field if we want to support logo upload here
-      // But standard implementation usually separates 'document' uploads from 'image' uploads
-      // For now, consistent with existing logic.
+      // Handle uploaded files (Cloudinary URLs)
+      // Files come with names like: owner_0_aadharFront, owner_1_panCard, logo, etc.
+      if (req.files && req.files.length > 0) {
+        req.files.forEach(file => {
+          const fieldName = file.fieldname;
+
+          // Check if it's a logo
+          if (fieldName === 'logo') {
+            settings.logo = file.path;
+            return;
+          }
+
+          // Check if it's an owner document (pattern: owner_INDEX_DOCTYPE)
+          const ownerMatch = fieldName.match(/^owner_(\d+)_(.+)$/);
+          if (ownerMatch) {
+            const ownerIndex = parseInt(ownerMatch[1]);
+            const docType = ownerMatch[2]; // aadharFront, aadharBack, etc.
+
+            // Ensure owners array and specific owner exist
+            if (!settings.owners) settings.owners = [];
+            if (!settings.owners[ownerIndex]) {
+              settings.owners[ownerIndex] = {
+                name: '',
+                documents: {}
+              };
+            }
+            if (!settings.owners[ownerIndex].documents) {
+              settings.owners[ownerIndex].documents = {};
+            }
+
+            // Save the Cloudinary URL
+            settings.owners[ownerIndex].documents[docType] = file.path;
+          }
+        });
+      }
+
+      // Save to database
+      await settings.save();
 
       res.json({
         success: true,
         message: 'Company settings updated successfully',
-        data: updatedSettings
+        data: settings
       });
     } catch (error) {
       console.error('Update company settings error:', error);
       res.status(500).json({
         success: false,
-        message: 'Server error'
+        message: error.message || 'Server error'
       });
     }
   });

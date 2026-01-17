@@ -145,7 +145,7 @@ const handleValidationErrors = (req, res) => {
 
 router.get('/', protect, async (req, res) => {
   try {
-    const { colony, status } = req.query
+    const { colony, status, limit = 1000 } = req.query
     const query = {}
     if (colony) query.colony = colony
     if (status) query.status = status
@@ -155,6 +155,7 @@ router.get('/', protect, async (req, res) => {
       .populate('city', 'name state')
       .populate('area', 'name')
       .sort({ createdAt: -1 })
+      .limit(Number(limit))
 
     res.json({
       success: true,

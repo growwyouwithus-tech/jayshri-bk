@@ -45,13 +45,9 @@ const upload = multer({
 });
 
 // Middleware for multiple document uploads
-const uploadDocuments = upload.fields([
-    { name: 'aadharFront', maxCount: 1 },
-    { name: 'aadharBack', maxCount: 1 },
-    { name: 'panCard', maxCount: 1 },
-    { name: 'passportPhoto', maxCount: 1 },
-    { name: 'fullPhoto', maxCount: 1 }
-]);
+// Using .any() to support dynamic field names for multiple owners
+// Field names will be like: owner_0_aadharFront, owner_1_aadharFront, logo, etc.
+const uploadDocuments = upload.any();
 
 module.exports = {
     upload,
