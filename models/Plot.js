@@ -160,6 +160,26 @@ const plotSchema = new mongoose.Schema({
     passportPhoto: String,
     fullPhoto: String
   },
+  // Plot Owners (from Settings) - Denormalized for historical accuracy
+  plotOwners: [{
+    ownerId: {
+      type: String // Store the _id as string from Settings.owners
+    },
+    ownerName: {
+      type: String,
+      required: true
+    },
+    ownerPhone: String,
+    ownerAadharNumber: String,
+    ownerPanNumber: String,
+    ownerDocuments: {
+      aadharFront: String,
+      aadharBack: String,
+      panCard: String,
+      passportPhoto: String,
+      fullPhoto: String
+    }
+  }],
   corner: {
     type: Boolean,
     default: false

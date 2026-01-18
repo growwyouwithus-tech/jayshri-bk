@@ -28,6 +28,28 @@ router.get('/', async (req, res) => {
   }
 });
 
+// @desc    Get owners list for plot selection
+// @route   GET /api/v1/settings/owners
+// @access  Private
+router.get('/owners', async (req, res) => {
+  try {
+    const settings = await Settings.getInstance();
+
+    res.json({
+      success: true,
+      data: {
+        owners: settings.owners || []
+      }
+    });
+  } catch (error) {
+    console.error('Get owners error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error'
+    });
+  }
+});
+
 // @desc    Update company settings
 // @route   PUT /api/v1/settings/company
 // @access  Private (Admin only)

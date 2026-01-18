@@ -277,6 +277,49 @@ router.post('/',
         }
       }
 
+      // Handle plot owners selection
+      if (req.body.selectedOwnerIds && req.body.selectedOwnerIds.length > 0) {
+        try {
+          const Settings = require('../models/Settings');
+          const settings = await Settings.getInstance();
+
+          // Parse selectedOwnerIds if it's a string
+          const ownerIds = typeof req.body.selectedOwnerIds === 'string'
+            ? JSON.parse(req.body.selectedOwnerIds)
+            : req.body.selectedOwnerIds;
+
+          // Fetch full owner details from Settings
+          const plotOwners = [];
+          for (const ownerId of ownerIds) {
+            const owner = settings.owners.find(o => o._id.toString() === ownerId);
+            if (owner) {
+              // Store denormalized owner data
+              plotOwners.push({
+                ownerId: owner._id.toString(),
+                ownerName: owner.name,
+                ownerPhone: owner.phone || '',
+                ownerAadharNumber: owner.aadharNumber || '',
+                ownerPanNumber: owner.panNumber || '',
+                ownerDocuments: {
+                  aadharFront: owner.documents?.aadharFront || '',
+                  aadharBack: owner.documents?.aadharBack || '',
+                  panCard: owner.documents?.panCard || '',
+                  passportPhoto: owner.documents?.passportPhoto || '',
+                  fullPhoto: owner.documents?.fullPhoto || ''
+                }
+              });
+            }
+          }
+
+          if (plotOwners.length > 0) {
+            plotData.plotOwners = plotOwners;
+          }
+        } catch (ownerError) {
+          console.error('Error fetching plot owners:', ownerError);
+          // Continue without owners if there's an error
+        }
+      }
+
       const plot = await Plot.create(plotData);
       await plot.populate({ path: 'colony', select: 'name city sellers' });
       return sendSuccess(res, 201, 'Plot created successfully', { plot });
@@ -412,6 +455,49 @@ router.put('/:id',
       if (files.customerFullPhoto) {
         updateData.customerDocuments = updateData.customerDocuments || {};
         updateData.customerDocuments.fullPhoto = files.customerFullPhoto[0].path;
+      }
+
+      // Handle plot owners selection (same as create)
+      if (req.body.selectedOwnerIds && req.body.selectedOwnerIds.length > 0) {
+        try {
+          const Settings = require('../models/Settings');
+          const settings = await Settings.getInstance();
+
+          // Parse selectedOwnerIds if it's a string
+          const ownerIds = typeof req.body.selectedOwnerIds === 'string'
+            ? JSON.parse(req.body.selectedOwnerIds)
+            : req.body.selectedOwnerIds;
+
+          // Fetch full owner details from Settings
+          const plotOwners = [];
+          for (const ownerId of ownerIds) {
+            const owner = settings.owners.find(o => o._id.toString() === ownerId);
+            if (owner) {
+              // Store denormalized owner data
+              plotOwners.push({
+                ownerId: owner._id.toString(),
+                ownerName: owner.name,
+                ownerPhone: owner.phone || '',
+                ownerAadharNumber: owner.aadharNumber || '',
+                ownerPanNumber: owner.panNumber || '',
+                ownerDocuments: {
+                  aadharFront: owner.documents?.aadharFront || '',
+                  aadharBack: owner.documents?.aadharBack || '',
+                  panCard: owner.documents?.panCard || '',
+                  passportPhoto: owner.documents?.passportPhoto || '',
+                  fullPhoto: owner.documents?.fullPhoto || ''
+                }
+              });
+            }
+          }
+
+          if (plotOwners.length > 0) {
+            updateData.plotOwners = plotOwners;
+          }
+        } catch (ownerError) {
+          console.error('Error fetching plot owners:', ownerError);
+          // Continue without owners if there's an error
+        }
       }
 
       const plot = await Plot.findByIdAndUpdate(
