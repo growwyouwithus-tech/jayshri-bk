@@ -196,23 +196,25 @@ const parseFormData = (req, res, next) => {
 // @access  Private (Admin, Manager)
 router.post('/',
   authorize('plot_create', 'all'),
-  upload.fields([
-    { name: 'paymentSlip', maxCount: 1 },
-    { name: 'registryDocument', maxCount: 20 },
-    { name: 'registryPdf', maxCount: 1 },
-    { name: 'plotImages', maxCount: 10 },
-    { name: 'customerAadharFront', maxCount: 1 },
-    { name: 'customerAadharBack', maxCount: 1 },
-    { name: 'customerPanCard', maxCount: 1 },
-    { name: 'customerPassportPhoto', maxCount: 1 },
-    { name: 'customerFullPhoto', maxCount: 1 }
-  ]),
+  upload.any(), // Changed to any() to support dynamic witness fields
   parseFormData,
   sanitizeRequest,
   validations.plot.create,
   handleValidationErrors,
   async (req, res) => {
     try {
+      // Normalize req.files from array (upload.any) to object (upload.fields style)
+      if (req.files && Array.isArray(req.files)) {
+        const filesObject = {};
+        req.files.forEach(file => {
+          if (!filesObject[file.fieldname]) {
+            filesObject[file.fieldname] = [];
+          }
+          filesObject[file.fieldname].push(file);
+        });
+        req.files = filesObject;
+      }
+
       // Check if colony exists
       const colony = await Colony.findById(req.body.colony);
       if (!colony) {
@@ -275,6 +277,36 @@ router.post('/',
           plotData.customerDocuments = plotData.customerDocuments || {};
           plotData.customerDocuments.fullPhoto = req.files.customerFullPhoto[0].path;
         }
+      }
+
+      // Handle Witness Documents (from upload.any())
+      if (req.files && Array.isArray(req.files) && req.body.witnesses) {
+        try {
+          // Ensure witnesses is an object/array (it might be a JSON string due to FormData)
+          let witnesses = typeof req.body.witnesses === 'string' ? JSON.parse(req.body.witnesses) : req.body.witnesses;
+
+          req.files.forEach(file => {
+            // Fieldname format: "witnessDocuments[0][aadharFront]"
+            const match = file.fieldname.match(/witnessDocuments\[(\d+)\]\[(\w+)\]/);
+            if (match) {
+              const index = parseInt(match[1]);
+              const docType = match[2];
+
+              if (witnesses[index]) {
+                witnesses[index].witnessDocuments = witnesses[index].witnessDocuments || {};
+                witnesses[index].witnessDocuments[docType] = file.path; // Cloudinary URL
+              }
+            }
+          });
+          plotData.witnesses = witnesses;
+        } catch (e) {
+          console.error("Error processing witness documents:", e);
+        }
+      } else if (req.body.witnesses) {
+        // Even if no files, parse witnesses if present
+        try {
+          plotData.witnesses = typeof req.body.witnesses === 'string' ? JSON.parse(req.body.witnesses) : req.body.witnesses;
+        } catch (e) { }
       }
 
       // Handle plot owners selection
@@ -343,17 +375,7 @@ router.post('/',
 // @access  Private (Admin, Manager)
 router.put('/:id',
   authorize('plot_update', 'all'),
-  upload.fields([
-    { name: 'paymentSlip', maxCount: 1 },
-    { name: 'registryDocument', maxCount: 20 },
-    { name: 'registryPdf', maxCount: 1 },
-    { name: 'plotImages', maxCount: 10 },
-    { name: 'customerAadharFront', maxCount: 1 },
-    { name: 'customerAadharBack', maxCount: 1 },
-    { name: 'customerPanCard', maxCount: 1 },
-    { name: 'customerPassportPhoto', maxCount: 1 },
-    { name: 'customerFullPhoto', maxCount: 1 }
-  ]),
+  upload.any(), // Changed to any() to support dynamic witness fields which Multer fields() generic does not support well
   parseFormData,
   validations.params.objectId,
   sanitizeRequest,
@@ -361,10 +383,25 @@ router.put('/:id',
   handleValidationErrors,
   async (req, res) => {
     try {
+      // Normalize req.files from array (upload.any) to object (upload.fields style)
+      let files = {};
+      if (req.files && Array.isArray(req.files)) {
+        const filesObject = {};
+        req.files.forEach(file => {
+          if (!filesObject[file.fieldname]) {
+            filesObject[file.fieldname] = [];
+          }
+          filesObject[file.fieldname].push(file);
+        });
+        files = filesObject;
+        req.files = filesObject;
+      } else {
+        files = req.files || {};
+      }
+
       const updateData = { ...req.body };
 
       // Add file paths if files were uploaded (Cloudinary URLs)
-      const files = req.files || {};
 
       // Add file paths if files were uploaded (Cloudinary URLs)
       if (files.paymentSlip) {
@@ -460,6 +497,42 @@ router.put('/:id',
       if (files.customerFullPhoto) {
         updateData.customerDocuments = updateData.customerDocuments || {};
         updateData.customerDocuments.fullPhoto = files.customerFullPhoto[0].path;
+      }
+
+      // Handle Witness Documents (Update)
+      if (req.files && Array.isArray(req.files)) {
+        // req.files is array now because of upload.any()
+        // We need to merge new files into the witnesses array
+        let witnesses = [];
+        if (req.body.witnesses) {
+          try {
+            witnesses = typeof req.body.witnesses === 'string' ? JSON.parse(req.body.witnesses) : req.body.witnesses;
+          } catch (e) { }
+        } else if (updateData.witnesses) {
+          witnesses = updateData.witnesses;
+        }
+
+        if (witnesses.length > 0) {
+          req.files.forEach(file => {
+            // Fieldname format: "witnessDocuments[0][aadharFront]"
+            const match = file.fieldname.match(/witnessDocuments\[(\d+)\]\[(\w+)\]/);
+            if (match) {
+              const index = parseInt(match[1]);
+              const docType = match[2];
+
+              if (witnesses[index]) {
+                witnesses[index].witnessDocuments = witnesses[index].witnessDocuments || {};
+                witnesses[index].witnessDocuments[docType] = file.path;
+              }
+            }
+          });
+          updateData.witnesses = witnesses;
+        }
+      } else if (req.body.witnesses) {
+        // No new files, but witness data might have changed (text fields)
+        try {
+          updateData.witnesses = typeof req.body.witnesses === 'string' ? JSON.parse(req.body.witnesses) : req.body.witnesses;
+        } catch (e) { }
       }
 
       // Handle plot owners selection (same as create)

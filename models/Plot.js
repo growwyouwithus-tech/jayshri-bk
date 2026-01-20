@@ -201,6 +201,28 @@ const plotSchema = new mongoose.Schema({
       fullPhoto: String
     }
   }],
+  // Witnesses - Multiple witnesses can be added
+  witnesses: [{
+    witnessName: {
+      type: String,
+      required: true
+    },
+    witnessPhone: String,
+    witnessAadharNumber: String,
+    witnessPanNumber: String,
+    witnessDateOfBirth: String,
+    witnessSonOf: String,
+    witnessDaughterOf: String,
+    witnessWifeOf: String,
+    witnessAddress: String,
+    witnessDocuments: {
+      aadharFront: String,
+      aadharBack: String,
+      panCard: String,
+      passportPhoto: String,
+      fullPhoto: String
+    }
+  }],
   corner: {
     type: Boolean,
     default: false
