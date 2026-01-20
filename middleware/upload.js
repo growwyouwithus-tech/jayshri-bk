@@ -16,7 +16,7 @@ const storage = new CloudinaryStorage({
     cloudinary: cloudinary,
     params: {
         folder: 'jaishree-colony/documents',
-        allowed_formats: ['jpg', 'jpeg', 'png', 'pdf'],
+        allowed_formats: ['jpg', 'jpeg', 'png', 'webp', 'gif', 'bmp', 'svg', 'tiff', 'pdf'],
         // resource_type: 'auto' is important for PDFs
         resource_type: 'auto'
     }
@@ -24,14 +24,14 @@ const storage = new CloudinaryStorage({
 
 // File filter (Optional as CloudinaryStorage has allowed_formats, but good for double checking)
 const fileFilter = (req, file, cb) => {
-    const allowedTypes = /jpeg|jpg|png|pdf/;
+    const allowedTypes = /jpeg|jpg|png|webp|gif|bmp|svg|tiff|pdf/;
     const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
     const mimetype = allowedTypes.test(file.mimetype);
 
     if (mimetype && extname) {
         cb(null, true);
     } else {
-        cb(new Error('Only image files (JPEG, JPG, PNG) and PDF are allowed!'), false);
+        cb(new Error('Only image files (JPEG, JPG, PNG, WEBP, GIF, BMP, SVG, TIFF) and PDF are allowed!'), false);
     }
 };
 
