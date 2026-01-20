@@ -93,6 +93,11 @@ router.put('/company',
               phone: ownerData.phone || existingOwner.phone || '',
               aadharNumber: ownerData.aadharNumber || existingOwner.aadharNumber || '',
               panNumber: ownerData.panNumber || existingOwner.panNumber || '',
+              dateOfBirth: ownerData.dateOfBirth || existingOwner.dateOfBirth || '',
+              sonOf: ownerData.sonOf || existingOwner.sonOf || '',
+              daughterOf: ownerData.daughterOf || existingOwner.daughterOf || '',
+              wifeOf: ownerData.wifeOf || existingOwner.wifeOf || '',
+              address: ownerData.address || existingOwner.address || '',
               documents: existingOwner.documents || {}
             };
           });

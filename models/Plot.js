@@ -74,6 +74,22 @@ const plotSchema = new mongoose.Schema({
     type: String,
     trim: true
   },
+  customerDateOfBirth: {
+    type: String,
+    trim: true
+  },
+  customerSonOf: {
+    type: String,
+    trim: true
+  },
+  customerDaughterOf: {
+    type: String,
+    trim: true
+  },
+  customerWifeOf: {
+    type: String,
+    trim: true
+  },
   customerFullAddress: {
     type: String,
     trim: true
@@ -172,6 +188,11 @@ const plotSchema = new mongoose.Schema({
     ownerPhone: String,
     ownerAadharNumber: String,
     ownerPanNumber: String,
+    ownerDateOfBirth: String,
+    ownerSonOf: String,
+    ownerDaughterOf: String,
+    ownerWifeOf: String,
+    ownerAddress: String,
     ownerDocuments: {
       aadharFront: String,
       aadharBack: String,

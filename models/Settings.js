@@ -14,6 +14,21 @@ const ownerSchema = new mongoose.Schema({
     panNumber: {
         type: String
     },
+    dateOfBirth: {
+        type: String
+    },
+    sonOf: {
+        type: String
+    },
+    daughterOf: {
+        type: String
+    },
+    wifeOf: {
+        type: String
+    },
+    address: {
+        type: String
+    },
     documents: {
         aadharFront: {
             type: String // Cloudinary URL

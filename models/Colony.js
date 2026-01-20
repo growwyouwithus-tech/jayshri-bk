@@ -123,6 +123,22 @@ const colonySchema = new mongoose.Schema({
       type: String,
       trim: true
     },
+    dateOfBirth: {
+      type: String,
+      trim: true
+    },
+    sonOf: {
+      type: String,
+      trim: true
+    },
+    daughterOf: {
+      type: String,
+      trim: true
+    },
+    wifeOf: {
+      type: String,
+      trim: true
+    },
     documents: {
       aadharFront: String,
       aadharBack: String,
