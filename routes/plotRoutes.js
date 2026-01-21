@@ -380,6 +380,7 @@ router.post('/',
 // @route   PUT /api/v1/plots/:id
 // @access  Private (Admin, Manager)
 router.put('/:id',
+  protect,
   authorize('plot_update', 'all'),
   upload.any(), // Changed to any() to support dynamic witness fields which Multer fields() generic does not support well
   parseFormData,
@@ -603,6 +604,7 @@ router.put('/:id',
         if (!existingBooking) {
           // Create new booking with manual customer details
           const bookingData = {
+            bookingNumber: `BK-${Date.now()}`,
             plot: plot._id,
             // (Optional) buyer: req.body.buyerId
             customerDetails: {
