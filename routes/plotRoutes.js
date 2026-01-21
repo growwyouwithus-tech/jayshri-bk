@@ -280,34 +280,40 @@ router.post('/',
       }
 
       // Handle Witness Documents (from upload.any())
-      if (req.files && Array.isArray(req.files) && req.body.witnesses) {
+      // Handle Witness Documents (from upload.any())
+      // Check if any keys in the normalized 'req.files' object match the witness pattern
+      const witnessFileKeys = Object.keys(req.files).filter(key => key.startsWith('witnessDocuments'));
+
+      if (req.body.witnesses || witnessFileKeys.length > 0) {
         try {
           // Ensure witnesses is an object/array (it might be a JSON string due to FormData)
-          let witnesses = typeof req.body.witnesses === 'string' ? JSON.parse(req.body.witnesses) : req.body.witnesses;
+          let witnesses = [];
+          if (req.body.witnesses) {
+            witnesses = typeof req.body.witnesses === 'string' ? JSON.parse(req.body.witnesses) : req.body.witnesses;
+          }
 
-          req.files.forEach(file => {
-            // Fieldname format: "witnessDocuments[0][aadharFront]"
-            const match = file.fieldname.match(/witnessDocuments\[(\d+)\]\[(\w+)\]/);
-            if (match) {
-              const index = parseInt(match[1]);
-              const docType = match[2];
+          if (witnessFileKeys.length > 0) {
+            witnessFileKeys.forEach(key => {
+              // Fieldname format: "witnessDocuments[0][aadharFront]"
+              const match = key.match(/witnessDocuments\[(\d+)\]\[(\w+)\]/);
+              if (match) {
+                const index = parseInt(match[1]);
+                const docType = match[2];
 
-              if (witnesses[index]) {
-                witnesses[index].witnessDocuments = witnesses[index].witnessDocuments || {};
-                witnesses[index].witnessDocuments[docType] = file.path; // Cloudinary URL
+                if (witnesses[index] && req.files[key] && req.files[key][0]) {
+                  witnesses[index].witnessDocuments = witnesses[index].witnessDocuments || {};
+                  witnesses[index].witnessDocuments[docType] = req.files[key][0].path; // Cloudinary URL
+                }
               }
-            }
-          });
+            });
+          }
           plotData.witnesses = witnesses;
         } catch (e) {
           console.error("Error processing witness documents:", e);
         }
-      } else if (req.body.witnesses) {
-        // Even if no files, parse witnesses if present
-        try {
-          plotData.witnesses = typeof req.body.witnesses === 'string' ? JSON.parse(req.body.witnesses) : req.body.witnesses;
-        } catch (e) { }
+
       }
+
 
       // Handle plot owners selection
       if (req.body.selectedOwnerIds && req.body.selectedOwnerIds.length > 0) {
@@ -500,9 +506,10 @@ router.put('/:id',
       }
 
       // Handle Witness Documents (Update)
-      if (req.files && Array.isArray(req.files)) {
-        // req.files is array now because of upload.any()
-        // We need to merge new files into the witnesses array
+      // Handle Witness Documents (Update)
+      const witnessFileKeysUpdate = Object.keys(files).filter(key => key.startsWith('witnessDocuments'));
+
+      if (req.body.witnesses || witnessFileKeysUpdate.length > 0) {
         let witnesses = [];
         if (req.body.witnesses) {
           try {
@@ -512,28 +519,24 @@ router.put('/:id',
           witnesses = updateData.witnesses;
         }
 
-        if (witnesses.length > 0) {
-          req.files.forEach(file => {
+        if (witnesses.length > 0 && witnessFileKeysUpdate.length > 0) {
+          witnessFileKeysUpdate.forEach(key => {
             // Fieldname format: "witnessDocuments[0][aadharFront]"
-            const match = file.fieldname.match(/witnessDocuments\[(\d+)\]\[(\w+)\]/);
+            const match = key.match(/witnessDocuments\[(\d+)\]\[(\w+)\]/);
             if (match) {
               const index = parseInt(match[1]);
               const docType = match[2];
 
-              if (witnesses[index]) {
+              if (witnesses[index] && files[key] && files[key][0]) {
                 witnesses[index].witnessDocuments = witnesses[index].witnessDocuments || {};
-                witnesses[index].witnessDocuments[docType] = file.path;
+                witnesses[index].witnessDocuments[docType] = files[key][0].path;
               }
             }
           });
-          updateData.witnesses = witnesses;
         }
-      } else if (req.body.witnesses) {
-        // No new files, but witness data might have changed (text fields)
-        try {
-          updateData.witnesses = typeof req.body.witnesses === 'string' ? JSON.parse(req.body.witnesses) : req.body.witnesses;
-        } catch (e) { }
+        updateData.witnesses = witnesses;
       }
+
 
       // Handle plot owners selection (same as create)
       if (req.body.selectedOwnerIds && req.body.selectedOwnerIds.length > 0) {
