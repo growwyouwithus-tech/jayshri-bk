@@ -48,6 +48,53 @@ const ownerSchema = new mongoose.Schema({
     }
 }, { _id: true });
 
+const witnessSchema = new mongoose.Schema({
+    name: {
+        type: String
+    },
+    phone: {
+        type: String
+    },
+    aadharNumber: {
+        type: String
+    },
+    panNumber: {
+        type: String
+    },
+    dateOfBirth: {
+        type: String
+    },
+    sonOf: {
+        type: String
+    },
+    daughterOf: {
+        type: String
+    },
+    wifeOf: {
+        type: String
+    },
+    address: {
+        type: String
+    },
+    documents: {
+        aadharFront: {
+            type: String // Cloudinary URL
+        },
+        aadharBack: {
+            type: String
+        },
+        panCard: {
+            type: String
+        },
+        passportPhoto: {
+            type: String
+        },
+        fullPhoto: {
+            type: String
+        }
+    }
+}, { _id: true });
+
 const settingsSchema = new mongoose.Schema({
     // Company Information
     companyName: {
@@ -82,6 +129,9 @@ const settingsSchema = new mongoose.Schema({
 
     // Multiple Owners
     owners: [ownerSchema],
+
+    // Company Witnesses
+    companyWitnesses: [witnessSchema],
 
     // Legacy fields (for migration) - will be removed after migration
     ownerAadharNumber: {

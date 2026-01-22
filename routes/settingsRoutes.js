@@ -107,8 +107,44 @@ router.put('/company',
         }
       }
 
+      // Handle companyWitnesses array
+      if (req.body.companyWitnesses) {
+        try {
+          const witnessesData = typeof req.body.companyWitnesses === 'string'
+            ? JSON.parse(req.body.companyWitnesses)
+            : req.body.companyWitnesses;
+
+          // Initialize witnesses array if it doesn't exist
+          if (!settings.companyWitnesses) {
+            settings.companyWitnesses = [];
+          }
+
+          // Update witnesses with data from request
+          settings.companyWitnesses = witnessesData.map((witnessData, index) => {
+            // Get existing witness or create new one
+            const existingWitness = settings.companyWitnesses[index] || {};
+
+            return {
+              _id: existingWitness._id,
+              name: witnessData.name || existingWitness.name || '',
+              phone: witnessData.phone || existingWitness.phone || '',
+              aadharNumber: witnessData.aadharNumber || existingWitness.aadharNumber || '',
+              panNumber: witnessData.panNumber || existingWitness.panNumber || '',
+              dateOfBirth: witnessData.dateOfBirth || existingWitness.dateOfBirth || '',
+              sonOf: witnessData.sonOf || existingWitness.sonOf || '',
+              daughterOf: witnessData.daughterOf || existingWitness.daughterOf || '',
+              wifeOf: witnessData.wifeOf || existingWitness.wifeOf || '',
+              address: witnessData.address || existingWitness.address || '',
+              documents: existingWitness.documents || {}
+            };
+          });
+        } catch (e) {
+          console.error('Error parsing companyWitnesses data:', e);
+        }
+      }
+
       // Handle uploaded files (Cloudinary URLs)
-      // Files come with names like: owner_0_aadharFront, owner_1_panCard, logo, etc.
+      // Files come with names like: owner_0_aadharFront, witness_0_panCard, logo, etc.
       if (req.files && req.files.length > 0) {
         req.files.forEach(file => {
           const fieldName = file.fieldname;
@@ -123,22 +159,34 @@ router.put('/company',
           const ownerMatch = fieldName.match(/^owner_(\d+)_(.+)$/);
           if (ownerMatch) {
             const ownerIndex = parseInt(ownerMatch[1]);
-            const docType = ownerMatch[2]; // aadharFront, aadharBack, etc.
+            const docType = ownerMatch[2];
 
-            // Ensure owners array and specific owner exist
+            // Ensure owners array exists
             if (!settings.owners) settings.owners = [];
-            if (!settings.owners[ownerIndex]) {
-              settings.owners[ownerIndex] = {
-                name: '',
-                documents: {}
-              };
-            }
-            if (!settings.owners[ownerIndex].documents) {
-              settings.owners[ownerIndex].documents = {};
-            }
+            // Ensure specific owner object exists
+            if (!settings.owners[ownerIndex]) settings.owners[ownerIndex] = { documents: {} };
+            // Ensure documents object exists
+            if (!settings.owners[ownerIndex].documents) settings.owners[ownerIndex].documents = {};
 
             // Save the Cloudinary URL
             settings.owners[ownerIndex].documents[docType] = file.path;
+          }
+
+          // Check if it's a witness document (pattern: witness_INDEX_DOCTYPE)
+          const witnessMatch = fieldName.match(/^witness_(\d+)_(.+)$/);
+          if (witnessMatch) {
+            const witnessIndex = parseInt(witnessMatch[1]);
+            const docType = witnessMatch[2]; // aadharFront, etc.
+
+            // Ensure witnesses array exists
+            if (!settings.companyWitnesses) settings.companyWitnesses = [];
+            // Ensure specific witness object exists
+            if (!settings.companyWitnesses[witnessIndex]) settings.companyWitnesses[witnessIndex] = { documents: {} };
+            // Ensure documents object exists
+            if (!settings.companyWitnesses[witnessIndex].documents) settings.companyWitnesses[witnessIndex].documents = {};
+
+            // Save the Cloudinary URL
+            settings.companyWitnesses[witnessIndex].documents[docType] = file.path;
           }
         });
       }
