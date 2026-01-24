@@ -120,9 +120,12 @@ router.put('/company',
           }
 
           // Update witnesses with data from request
-          settings.companyWitnesses = witnessesData.map((witnessData, index) => {
-            // Get existing witness or create new one
-            const existingWitness = settings.companyWitnesses[index] || {};
+          settings.companyWitnesses = witnessesData.map((witnessData) => {
+            // Get existing witness by ID if available, otherwise treat as new
+            let existingWitness = {};
+            if (witnessData._id) {
+              existingWitness = settings.companyWitnesses.find(w => w._id.toString() === witnessData._id) || {};
+            }
 
             return {
               _id: existingWitness._id,
