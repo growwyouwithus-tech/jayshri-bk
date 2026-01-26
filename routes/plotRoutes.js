@@ -76,7 +76,7 @@ router.get('/property/:propertyId',
       }
 
       const plots = await Plot.find(query)
-        .populate({ path: 'colony', select: 'name city sellers' })
+        .populate({ path: 'colony', select: 'name city sellers khatoniHolders' })
         .populate({ path: 'propertyId', select: 'name category basePricePerGaj totalLandAreaGaj address' })
         .populate('currentOwner', 'name email phone')
         .sort({ plotNumber: 1 })
@@ -102,7 +102,7 @@ router.get('/:id',
   async (req, res) => {
     try {
       const plot = await Plot.findById(req.params.id)
-        .populate({ path: 'colony', select: 'name city address sellers' })
+        .populate({ path: 'colony', select: 'name city address sellers khatoniHolders' })
         .populate({ path: 'propertyId', select: 'name category basePricePerGaj' })
         .populate('currentOwner', 'name email phone')
         .populate('createdBy', 'name email')
@@ -145,7 +145,7 @@ router.get('/', async (req, res) => {
     }
 
     const plots = await Plot.find(query)
-      .populate({ path: 'colony', select: 'name city sellers' })
+      .populate({ path: 'colony', select: 'name city sellers khatoniHolders' })
       .populate({ path: 'propertyId', select: 'name category basePricePerGaj' })
       .populate('currentOwner', 'name email')
       .populate('createdBy', 'name email')

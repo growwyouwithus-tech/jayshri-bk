@@ -292,22 +292,13 @@ router.post('/:id/khatoni-holders/:holderIndex/documents', authorize('colony_upd
     }
 
     // Update document paths from uploaded files
-    if (req.files) {
-      if (req.files.aadharFront && req.files.aadharFront[0]) {
-        colony.khatoniHolders[holderIndex].documents.aadharFront = `/uploads/documents/${req.files.aadharFront[0].filename}`;
-      }
-      if (req.files.aadharBack && req.files.aadharBack[0]) {
-        colony.khatoniHolders[holderIndex].documents.aadharBack = `/uploads/documents/${req.files.aadharBack[0].filename}`;
-      }
-      if (req.files.panCard && req.files.panCard[0]) {
-        colony.khatoniHolders[holderIndex].documents.panCard = `/uploads/documents/${req.files.panCard[0].filename}`;
-      }
-      if (req.files.passportPhoto && req.files.passportPhoto[0]) {
-        colony.khatoniHolders[holderIndex].documents.passportPhoto = `/uploads/documents/${req.files.passportPhoto[0].filename}`;
-      }
-      if (req.files.fullPhoto && req.files.fullPhoto[0]) {
-        colony.khatoniHolders[holderIndex].documents.fullPhoto = `/uploads/documents/${req.files.fullPhoto[0].filename}`;
-      }
+    // Update document paths from uploaded files
+    if (req.files && req.files.length > 0) {
+      req.files.forEach(file => {
+        if (['aadharFront', 'aadharBack', 'panCard', 'passportPhoto', 'fullPhoto'].includes(file.fieldname)) {
+          colony.khatoniHolders[holderIndex].documents[file.fieldname] = file.path;
+        }
+      });
     }
 
     await colony.save();
