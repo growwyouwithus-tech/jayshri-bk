@@ -1,0 +1,44 @@
+{
+  "name": "jaishree-colony-backend",
+  "version": "1.0.0",
+  "description": "Backend API for Jaishree Colony Management System",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "nodemon server.js",
+    "init-db": "node scripts/initDatabase.js",
+    "seed": "node scripts/seedDatabase.js",
+    "seed-roles": "node scripts/seedRoles.js",
+    "update-roles": "node scripts/updateRoles.js",
+    "generate-codes": "node scripts/generateUserCodes.js",
+    "add-dummy": "node scripts/addDummyData.js",
+    "clear-data": "node scripts/clearAndAddData.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "colony",
+    "management",
+    "real-estate",
+    "api"
+  ],
+  "author": "Jaishree Group",
+  "license": "ISC",
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "cloudinary": "^1.41.3",
+    "cors": "^2.8.5",
+    "dotenv": "^16.6.1",
+    "express": "^4.18.2",
+    "express-rate-limit": "^6.10.0",
+    "express-validator": "^7.0.1",
+    "helmet": "^7.0.0",
+    "jsonwebtoken": "^9.0.2",
+    "mongoose": "^7.5.0",
+    "multer": "^1.4.5-lts.1",
+    "multer-storage-cloudinary": "^4.0.0",
+    "nodemailer": "^7.0.11"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.1"
+  }
+}
