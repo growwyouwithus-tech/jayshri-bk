@@ -147,6 +147,35 @@ const plotSchema = new mongoose.Schema({
   transactionDate: {
     type: Date
   },
+
+  // 1. Client Information
+  clientCode: { type: String, trim: true },
+  nominee: { type: String, trim: true },
+  nomineeRelation: { type: String, trim: true },
+  referralCode: { type: String, trim: true },
+
+  // 2. Additional Plot Information
+  khasaraNo: { type: String, trim: true },
+  plc: {
+    isCorner: { type: Boolean, default: false },
+    percentage: { type: Number },
+    amount: { type: Number }
+  },
+  priceWithPlc: { type: Number },
+
+  // 3. Tehsil Expenses
+  tehsilExpenses: {
+    govPriceCircleRate: { type: Number }, // Gov. Price/Circle Rate
+    plotSizeMtr: { type: Number }, // Plot Size in mtr.
+    priceMtr: { type: Number }, // Price in mtr.
+    stampDuty: { type: Number }, // Stamp Duty + 500Rs.
+    receiptAmount: { type: Number }, // Receipt 1% + 500
+    gender: { type: String, enum: ['Male', 'Female', 'Other', ''] }, // Gender M/F
+    advocateFee: { type: Number }, // Advocate Fee
+    totalExpense: { type: Number }, // Total Expense
+    moneyDifference: { type: Number }, // Money Different
+    marketPriceSqYard: { type: Number } // Market Price in sq.yard
+  },
   //   transactionTime: {
   //     type:String,
   //    default: Date.now(),
