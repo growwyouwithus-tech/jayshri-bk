@@ -1,0 +1,37 @@
+[
+  {
+    "plotNumber": "PLOT-0006",
+    "customerName": "LAKSHMI SHARMA",
+    "customerNumber": "+919814342118",
+    "status": "sold",
+    "colony": "JAYSHRI FACE 1"
+  },
+  {
+    "plotNumber": "6",
+    "customerName": "Lakshmi Sharma",
+    "customerNumber": "+919814342118",
+    "status": "sold",
+    "colony": "jay shiv"
+  },
+  {
+    "plotNumber": "06",
+    "customerName": "Lakshmi Sharma",
+    "customerNumber": "+919814342118",
+    "status": "sold",
+    "colony": "RADHEY RADHEY"
+  },
+  {
+    "plotNumber": "06",
+    "customerName": "Lakshmi Sharma",
+    "customerNumber": "+919814342118",
+    "status": "sold",
+    "colony": "KRISHNA"
+  },
+  {
+    "plotNumber": "6",
+    "customerName": "Lakshmi Sharma",
+    "customerNumber": "+919814342118",
+    "status": "sold",
+    "colony": "KRISHNA 1"
+  }
+]
