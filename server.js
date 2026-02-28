@@ -1,3 +1,5 @@
+const dns = require('dns');
+dns.setServers(['8.8.8.8', '8.8.4.4']); // Use Google DNS to resolve MongoDB Atlas SRV records
 const express = require('express')
 console.log('🔄 Server Restarting...');
 const mongoose = require('mongoose');
