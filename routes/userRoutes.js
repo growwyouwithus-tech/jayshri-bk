@@ -16,7 +16,7 @@ router.use(protect);
 // @access  Private (Admin, Manager)
 router.get('/', authorize('user_read', 'all'), async (req, res) => {
   try {
-    const { page = 1, limit = 10, role, search, status } = req.query;
+    const { page = 1, limit = 10000, role, search, status } = req.query;
 
     const query = {};
 
@@ -104,8 +104,7 @@ router.get('/:id', async (req, res) => {
 router.post('/', authorize('user_create', 'all'), [
   body('name').notEmpty().withMessage('Name is required'),
   body('email').isEmail().withMessage('Please provide a valid email'),
-  body('password').optional().isLength({ min: 8, max: 8 }).withMessage('Password must be exactly 8 digits'),
-  body('password').optional().matches(/^[0-9]{8}$/).withMessage('Password must contain exactly 8 digits'),
+  body('password').optional().isLength({ min: 6 }).withMessage('Password must be at least 6 characters'),
   body('role').notEmpty().withMessage('Role is required')
 ], async (req, res) => {
   try {

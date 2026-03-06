@@ -271,4 +271,26 @@ router.put('/change-password', protect, [
   }
 });
 
+
+// @desc    Verify current user password (used for sensitive actions)
+// @route   POST /api/v1/auth/verify-password
+// @access  Private
+router.post('/verify-password', protect, async (req, res) => {
+  try {
+    const { password } = req.body;
+    if (!password) {
+      return res.status(400).json({ success: false, message: 'Password is required' });
+    }
+    const user = await User.findById(req.user._id).select('+password');
+    const isValid = await user.comparePassword(password);
+    if (!isValid) {
+      return res.status(401).json({ success: false, message: 'Incorrect password' });
+    }
+    res.json({ success: true, message: 'Password verified' });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Server error' });
+  }
+});
+
 module.exports = router;
+

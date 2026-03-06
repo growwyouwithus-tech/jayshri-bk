@@ -664,13 +664,6 @@ router.delete('/:id',
         });
       }
 
-      // Check if plot is sold or has bookings
-      if (plot.status === 'sold') {
-        return res.status(400).json({
-          success: false,
-          message: 'Cannot delete sold plot'
-        });
-      }
 
       await plot.deleteOne();
 
