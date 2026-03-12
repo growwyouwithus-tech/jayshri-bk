@@ -25,6 +25,9 @@ const expenseSchema = new mongoose.Schema({
     enum: [
       'Construction Materials',
       'Labor Charges',
+      'Landlord expenses',
+      'Electricity',
+      'Water charges',
       'Equipment Rental',
       'Transportation',
       'Legal & Documentation',
@@ -38,6 +41,7 @@ const expenseSchema = new mongoose.Schema({
       'Salaries & Wages',
       'Miscellaneous'
     ]
+
   },
   amount: {
     type: Number,

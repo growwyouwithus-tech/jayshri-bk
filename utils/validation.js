@@ -118,9 +118,10 @@ const validations = {
       body('pricePerSqFt')
         .isNumeric()
         .withMessage('Price per sq ft must be a number')
-        .isFloat({ min: 100, max: 50000 })
-        .withMessage('Price per sq ft must be between ₹100 and ₹50,000')
-        .customSanitizer(value => sanitizers.sanitizeNumber(value, { min: 100, max: 50000 })),
+        .isFloat({ min: 1, max: 5000000 })
+        .withMessage('Price per sq ft must be a valid positive number')
+        .customSanitizer(value => sanitizers.sanitizeNumber(value, { min: 1, max: 5000000 })),
+
 
       // Facing validation
       body('facing')
@@ -202,11 +203,10 @@ const validations = {
       body('customerName')
         .optional()
         .trim()
-        .isLength({ min: 2, max: 100 })
-        .withMessage('Customer name must be between 2 and 100 characters')
-        .matches(/^[A-Za-z\s\-\.]+$/)
-        .withMessage('Customer name can only contain letters, spaces, hyphens, and periods')
+        .isLength({ min: 2, max: 150 })
+        .withMessage('Customer name must be between 2 and 150 characters')
         .customSanitizer(sanitizers.sanitizeString),
+
 
       body('customerNumber')
         .optional()
@@ -256,10 +256,8 @@ const validations = {
       body('agentName')
         .optional()
         .trim()
-        .isLength({ max: 100 })
-        .withMessage('Agent name cannot exceed 100 characters')
-        .matches(/^[A-Za-z\s\-\.]*$/)
-        .withMessage('Agent name can only contain letters, spaces, hyphens, and periods')
+        .isLength({ max: 150 })
+        .withMessage('Agent name cannot exceed 150 characters')
         .customSanitizer(sanitizers.sanitizeString),
 
       body('agentCode')
@@ -274,11 +272,10 @@ const validations = {
       body('advocateName')
         .optional()
         .trim()
-        .isLength({ max: 100 })
-        .withMessage('Advocate name cannot exceed 100 characters')
-        .matches(/^[A-Za-z\s\-\.]*$/)
-        .withMessage('Advocate name can only contain letters, spaces, hyphens, and periods')
+        .isLength({ max: 150 })
+        .withMessage('Advocate name cannot exceed 150 characters')
         .customSanitizer(sanitizers.sanitizeString),
+
 
       body('advocateCode')
         .optional()
@@ -338,9 +335,9 @@ const validations = {
         .optional()
         .isNumeric()
         .withMessage('Price per sq ft must be a number')
-        .isFloat({ min: 100, max: 50000 })
-        .withMessage('Price per sq ft must be between ₹100 and ₹50,000')
-        .customSanitizer(value => sanitizers.sanitizeNumber(value, { min: 100, max: 50000 })),
+        .isFloat({ min: 1, max: 5000000 })
+        .withMessage('Price per sq ft must be a valid positive number')
+        .customSanitizer(value => sanitizers.sanitizeNumber(value, { min: 1, max: 5000000 })),
 
       body('status')
         .optional()
@@ -352,10 +349,8 @@ const validations = {
       body('customerName')
         .optional()
         .trim()
-        .isLength({ min: 2, max: 100 })
-        .withMessage('Customer name must be between 2 and 100 characters')
-        .matches(/^[A-Za-z\s\-\.]+$/)
-        .withMessage('Customer name can only contain letters, spaces, hyphens, and periods')
+        .isLength({ min: 2, max: 150 })
+        .withMessage('Customer name must be between 2 and 150 characters')
         .customSanitizer(sanitizers.sanitizeString),
 
       body('customerNumber')
@@ -406,10 +401,8 @@ const validations = {
       body('agentName')
         .optional()
         .trim()
-        .isLength({ max: 100 })
-        .withMessage('Agent name cannot exceed 100 characters')
-        .matches(/^[A-Za-z\s\-\.]*$/)
-        .withMessage('Agent name can only contain letters, spaces, hyphens, and periods')
+        .isLength({ max: 150 })
+        .withMessage('Agent name cannot exceed 150 characters')
         .customSanitizer(sanitizers.sanitizeString),
 
       body('agentCode')
@@ -424,11 +417,10 @@ const validations = {
       body('advocateName')
         .optional()
         .trim()
-        .isLength({ max: 100 })
-        .withMessage('Advocate name cannot exceed 100 characters')
-        .matches(/^[A-Za-z\s\-\.]*$/)
-        .withMessage('Advocate name can only contain letters, spaces, hyphens, and periods')
+        .isLength({ max: 150 })
+        .withMessage('Advocate name cannot exceed 150 characters')
         .customSanitizer(sanitizers.sanitizeString),
+
 
       body('advocateCode')
         .optional()
