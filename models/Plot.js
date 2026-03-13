@@ -194,8 +194,12 @@ const plotSchema = new mongoose.Schema({
   },
   registryStatus: {
     type: String,
-    enum: ['pending', 'completed'],
+    enum: ['pending', 'completed', 'rejected', 'correction_requested'],
     default: 'pending'
+  },
+  registryRemarks: {
+    type: String,
+    trim: true
   },
   // Customer/Buyer Documents
   customerDocuments: {

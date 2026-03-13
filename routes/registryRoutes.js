@@ -37,7 +37,10 @@ router.get('/', async (req, res) => {
 
     // Fetch plots with full population
     const plots = await Plot.find(query)
-      .populate('colony')
+      .populate({
+        path: 'colony',
+        select: 'name khatoniHolders city state'
+      })
       .populate({
         path: 'propertyId',
         populate: {
@@ -48,6 +51,7 @@ router.get('/', async (req, res) => {
       .populate('currentOwner')
       .populate('createdBy', 'name email phone documents')
       .sort({ updatedAt: -1 });
+
 
     console.log(`Found ${plots.length} plots for query`);
     if (plots.length > 0) {
@@ -145,6 +149,52 @@ router.get('/', async (req, res) => {
     });
   } catch (error) {
     console.error('Get registry error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error',
+      error: error.message
+    });
+  }
+});
+
+// @desc    Update registry status (Legal Verification)
+// @route   PUT /api/v1/registry/:id/status
+// @access  Private (Lawyer/Admin)
+router.put('/:id/status', authorize('registry_update', 'all'), async (req, res) => {
+  try {
+    const { status, remarks } = req.body;
+    
+    // Validate status
+    const validStatuses = ['pending', 'completed', 'rejected', 'correction_requested'];
+    if (!validStatuses.includes(status)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid status'
+      });
+    }
+
+    const plot = await Plot.findByIdAndUpdate(
+      req.params.id,
+      { 
+        registryStatus: status,
+        registryRemarks: remarks 
+      },
+      { new: true, runValidators: true }
+    );
+
+    if (!plot) {
+      return res.status(404).json({
+        success: false,
+        message: 'Plot not found'
+      });
+    }
+
+    res.json({
+      success: true,
+      data: plot
+    });
+  } catch (error) {
+    console.error('Update registry status error:', error);
     res.status(500).json({
       success: false,
       message: 'Server error',
