@@ -42,6 +42,7 @@ app.use(cors({
   origin: [
     process.env.FRONTEND_URL || 'http://localhost:5173',
     process.env.USER_APP_URL || 'http://localhost:5174',
+    'https://slateblue-rail-143517.hostingersite.com',
     'http://localhost:3000' // Additional fallback
   ],
   credentials: true,
