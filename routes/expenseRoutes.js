@@ -6,7 +6,7 @@ const { sendSuccess, sendError } = require('../middleware/responseHandler')
 const { upload } = require('../middleware/upload') // Import Cloudinary upload middleware
 
 // Get all expenses with filters
-router.get('/', protect, authorize(['Admin', 'Manager']), async (req, res) => {
+router.get('/', protect, authorize('Admin', 'Manager'), async (req, res) => {
   try {
     const { category, mode, expenseType, property, startDate, endDate } = req.query
     const filter = {}
@@ -55,7 +55,7 @@ router.get('/', protect, authorize(['Admin', 'Manager']), async (req, res) => {
 })
 
 // Get single expense
-router.get('/:id', protect, authorize(['Admin', 'Manager']), async (req, res) => {
+router.get('/:id', protect, authorize('Admin', 'Manager'), async (req, res) => {
   try {
     const expense = await Expense.findById(req.params.id)
       .populate('property', 'name location')
@@ -74,7 +74,7 @@ router.get('/:id', protect, authorize(['Admin', 'Manager']), async (req, res) =>
 })
 
 // Create new expense
-router.post('/', protect, authorize(['Admin', 'Manager']), upload.single('billFile'), async (req, res) => {
+router.post('/', protect, authorize('Admin', 'Manager'), upload.single('billFile'), async (req, res) => {
   try {
     const expenseData = {
       date: req.body.date,
@@ -112,7 +112,7 @@ router.post('/', protect, authorize(['Admin', 'Manager']), upload.single('billFi
 })
 
 // Update expense
-router.put('/:id', protect, authorize(['Admin', 'Manager']), upload.single('billFile'), async (req, res) => {
+router.put('/:id', protect, authorize('Admin', 'Manager'), upload.single('billFile'), async (req, res) => {
   try {
     const expense = await Expense.findById(req.params.id)
 
@@ -156,7 +156,7 @@ router.put('/:id', protect, authorize(['Admin', 'Manager']), upload.single('bill
 })
 
 // Delete expense
-router.delete('/:id', protect, authorize(['Admin', 'Manager']), async (req, res) => {
+router.delete('/:id', protect, authorize('Admin', 'Manager'), async (req, res) => {
   try {
     const expense = await Expense.findById(req.params.id)
 
@@ -181,7 +181,7 @@ router.delete('/:id', protect, authorize(['Admin', 'Manager']), async (req, res)
 })
 
 // Get expense statistics
-router.get('/stats/summary', protect, authorize(['Admin', 'Manager']), async (req, res) => {
+router.get('/stats/summary', protect, authorize('Admin', 'Manager'), async (req, res) => {
   try {
     const { startDate, endDate, property, expenseType } = req.query
     const filter = {}

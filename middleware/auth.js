@@ -68,11 +68,18 @@ const authorize = (...permissions) => {
       return next();
     }
 
-    // Check if user has required permissions
+    // Check if user has required permissions or if their role matches the permission strings
     const userPermissions = req.user.role.permissions || [];
-    const hasPermission = permissions.some(permission => 
-      userPermissions.includes(permission) || userPermissions.includes('all')
-    );
+    const roleName = req.user.role.name ? req.user.role.name.toLowerCase() : '';
+    
+    // Some routes pass role names (e.g. 'Agent', 'Manager') as permissions
+    // We check both exact permission matches and case-insensitive role name matches
+    const hasPermission = permissions.some(permission => {
+      const p = permission.toLowerCase();
+      return userPermissions.includes(permission) || 
+             userPermissions.includes('all') ||
+             roleName === p;
+    });
 
     if (!hasPermission) {
       return res.status(403).json({

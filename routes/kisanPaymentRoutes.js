@@ -95,7 +95,7 @@ router.put('/:id', protect, async (req, res) => {
 })
 
 // Delete payment
-router.delete('/:id', protect, authorize(['Admin', 'Manager']), async (req, res) => {
+router.delete('/:id', protect, authorize('Admin', 'Manager'), async (req, res) => {
   try {
     const payment = await KisanPayment.findById(req.params.id)
 
