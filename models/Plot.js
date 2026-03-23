@@ -35,6 +35,12 @@ const plotSchema = new mongoose.Schema({
     left: String,
     right: String
   },
+  sideMeasurements: {
+    front: Number,
+    back: Number,
+    left: Number,
+    right: Number
+  },
   pricePerSqFt: {
     type: Number,
     required: [true, 'Price per sq ft is required']
