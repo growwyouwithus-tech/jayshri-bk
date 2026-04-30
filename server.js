@@ -39,11 +39,7 @@ if (process.env.NODE_ENV === 'production') {
 
 // CORS configuration
 app.use(cors({
-  origin: [
-    process.env.FRONTEND_URL || 'http://localhost:5173',
-    process.env.USER_APP_URL || 'http://localhost:5174',
-    'http://localhost:3000' // Additional fallback
-  ],
+  origin: '*', // Allow all origins for development
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
@@ -121,6 +117,7 @@ app.use('/api/v1/commissions', require('./routes/commissionRoutes'));
 app.use('/api/v1/notifications', require('./routes/notificationRoutes'));
 app.use('/api/v1/kisan-payments', require('./routes/kisanPaymentRoutes'));
 app.use('/api/v1/expenses', require('./routes/expenseRoutes'));
+app.use('/api/v1/contacts', require('./routes/contactRoutes'));
 
 // Health check endpoint
 app.get('/api/v1/health', (req, res) => {

@@ -37,6 +37,7 @@ router.get('/colony/:colonyId',
 
       const plots = await Plot.find(query)
         .populate({ path: 'colony', select: 'name city sellers' })
+        .populate({ path: 'propertyId', select: 'name category basePricePerGaj media' })
         .populate('currentOwner', 'name email phone')
         .sort({ plotNumber: 1 })
         .lean();
@@ -103,7 +104,7 @@ router.get('/:id',
     try {
       const plot = await Plot.findById(req.params.id)
         .populate({ path: 'colony', select: 'name city address sellers khatoniHolders' })
-        .populate({ path: 'propertyId', select: 'name category basePricePerGaj' })
+        .populate({ path: 'propertyId', select: 'name category basePricePerGaj media' })
         .populate('currentOwner', 'name email phone')
         .populate('createdBy', 'name email')
         .lean();

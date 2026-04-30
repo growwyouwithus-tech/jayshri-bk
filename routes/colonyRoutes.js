@@ -26,13 +26,21 @@ router.get('/', async (req, res) => {
       ];
     }
 
-    const colonies = await Colony.find(query)
-      .populate('city', 'name state')
-      .populate('createdBy', 'name email')
-      .select('+pricePerSqFt') // Ensure pricePerSqFt is included
-      .sort({ createdAt: -1 })
-      .limit(limit * 1)
-      .skip((page - 1) * limit);
+    const colonies = await Colony.aggregate([
+      { $match: query },
+      {
+        $lookup: {
+          from: 'properties',
+          localField: '_id',
+          foreignField: 'colony',
+          as: 'property'
+        }
+      },
+      { $addFields: { property: { $arrayElemAt: ['$property', 0] } } },
+      { $sort: { createdAt: -1 } },
+      { $skip: (page - 1) * limit },
+      { $limit: limit * 1 }
+    ]);
 
     const total = await Colony.countDocuments(query);
 
@@ -61,9 +69,20 @@ router.get('/', async (req, res) => {
 // @access  Public
 router.get('/:id', async (req, res) => {
   try {
-    const colony = await Colony.findById(req.params.id)
-      .populate('city', 'name state country')
-      .populate('createdBy', 'name email');
+    const colonies = await Colony.aggregate([
+      { $match: { _id: new (require('mongoose').Types.ObjectId)(req.params.id) } },
+      {
+        $lookup: {
+          from: 'properties',
+          localField: '_id',
+          foreignField: 'colony',
+          as: 'property'
+        }
+      },
+      { $addFields: { property: { $arrayElemAt: ['$property', 0] } } }
+    ]);
+
+    const colony = colonies[0];
 
     if (!colony) {
       return res.status(404).json({
@@ -71,10 +90,6 @@ router.get('/:id', async (req, res) => {
         message: 'Colony not found'
       });
     }
-
-    console.log('Colony found:', colony.name);
-    console.log('Purchase Price:', colony.purchasePrice);
-    console.log('Khatoni Holders:', colony.khatoniHolders);
 
     res.json({
       success: true,

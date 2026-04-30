@@ -376,6 +376,41 @@ router.get('/my-bookings', protectCustomer, async (req, res) => {
   }
 });
 
+// @desc    Get customer's single booking details
+// @route   GET /api/v1/customer-auth/my-bookings/:id
+// @access  Private (Customer)
+router.get('/my-bookings/:id', protectCustomer, async (req, res) => {
+  try {
+    const Booking = require('../models/Booking');
+    
+    const booking = await Booking.findOne({ 
+      _id: req.params.id,
+      buyer: req.customer._id 
+    }).populate({
+      path: 'plot',
+      populate: { path: 'colony' }
+    });
+
+    if (!booking) {
+      return res.status(404).json({
+        success: false,
+        message: 'Booking not found'
+      });
+    }
+
+    res.json({
+      success: true,
+      data: booking
+    });
+  } catch (error) {
+    console.error('Get customer single booking error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error fetching booking details'
+    });
+  }
+});
+
 // @desc    Send OTP for password reset
 // @route   POST /api/v1/customer-auth/forgot-password
 // @access  Public
