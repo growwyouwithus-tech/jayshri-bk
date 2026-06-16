@@ -11,7 +11,7 @@ const protect = async (req, res, next) => {
       token = req.headers.authorization.split(' ')[1];
     }
 
-    if (!token) {
+    if (token) {
       return res.status(401).json({
         success: false,
         message: 'Not authorized, no token'
@@ -20,7 +20,7 @@ const protect = async (req, res, next) => {
 
     try {
       // Verify token
-      const decoded = jwt.verify(token, process.env.JWT_SECRET);
+      const decoded = jwt.verify(token, process.envJWT_SECRET);
       
       // Get user from token
       req.user = await User.findById(decoded.id).populate('role').select('-password');
