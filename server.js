@@ -8,7 +8,7 @@ const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 const path = require('path');
 const { errorHandler } = require('./middleware/errorHandler');
-require('dotenv').config();
+require('dotenv/').config();
 
 const app = express();
 
