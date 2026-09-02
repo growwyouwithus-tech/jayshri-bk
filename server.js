@@ -1,6 +1,11 @@
 const dns = require('dns');
-dns.setServers(['8.8.8.8', '8.8.4.4']); // Use Google DNS to resolve MongoDB Atlas SRV records
-const express = require('express')
+try {
+  dns.setServers(['8.8.8.8', '8.8.4.4']); // Use Google DNS to resolve MongoDB Atlas SRV records
+} catch (e) {
+  console.warn('DNS setServers note:', e.message);
+}
+
+const express = require('express');
 console.log('🔄 Server Restarting...');
 const mongoose = require('mongoose');
 const cors = require('cors');
@@ -8,7 +13,7 @@ const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 const path = require('path');
 const { errorHandler } = require('./middleware/errorHandler');
-require('dotenv/').config();
+require('dotenv').config();
 
 const app = express();
 
@@ -57,47 +62,99 @@ app.use('/uploads', (req, res, next) => {
   next();
 }, express.static(path.join(__dirname, 'uploads')));
 
-// Database connection with retry logic
+// Database connection with caching for serverless environments
+let cachedPromise = null;
+
 const connectDB = async () => {
-  let retries = 5;
-
-  while (retries) {
-    try {
-      const conn = await mongoose.connect(process.env.MONGODB_URI, {
-        useNewUrlParser: true,
-        useUnifiedTopology: true,
-        serverSelectionTimeoutMS: 5000,
-      });
-      // `mongoose.connect()` resolves to the `mongoose` instance in v6/v7, so we
-      // should read the details from `mongoose.connection` instead of the return
-      // value. This also works reliably across standalone and Atlas clusters.
-      const { host, port, name: dbName } = mongoose.connection;
-      console.log(`✅ MongoDB Connected: ${host ?? 'unknown'}${port ? ':' + port : ''}`);
-      console.log(`📊 Database: ${dbName ?? 'unknown'}`);
-      return;
-    } catch (error) {
-      retries -= 1;
-      console.error(`❌ Database connection error: ${error.message}`);
-      console.log(`⏳ Retrying connection... (${retries} attempts remaining)`);
-
-      if (retries === 0) {
-        console.error('❌ Failed to connect to MongoDB after 5 attempts');
-        process.exit(1);
-      }
-
-      // Wait 5 seconds before retrying
-      await new Promise(resolve => setTimeout(resolve, 5000));
-    }
+  // If already connected, reuse existing connection
+  if (mongoose.connection && mongoose.connection.readyState >= 1) {
+    return mongoose.connection;
   }
+
+  if (!process.env.MONGODB_URI) {
+    console.warn('⚠️ MONGODB_URI is not set in environment variables.');
+    return null;
+  }
+
+  if (!cachedPromise) {
+    const opts = {
+      useNewUrlParser: true,
+      useUnifiedTopology: true,
+      serverSelectionTimeoutMS: 5000,
+      connectTimeoutMS: 5000,
+    };
+
+    cachedPromise = mongoose.connect(process.env.MONGODB_URI, opts)
+      .then((mongooseInstance) => {
+        const { host, port, name: dbName } = mongoose.connection;
+        console.log(`✅ MongoDB Connected: ${host ?? 'unknown'}${port ? ':' + port : ''}`);
+        console.log(`📊 Database: ${dbName ?? 'unknown'}`);
+        return mongooseInstance;
+      })
+      .catch((error) => {
+        cachedPromise = null; // reset cached promise on failure so subsequent requests can retry
+        console.error(`❌ Database connection error: ${error.message}`);
+        // Do NOT call process.exit(1) in serverless!
+      });
+  }
+
+  return cachedPromise;
 };
 
-// Connect to database
+// Initial connection attempt (asynchronous, non-fatal)
 connectDB();
 
 // Request logging middleware
 app.use((req, res, next) => {
   console.log(`${req.method} ${req.path}`);
   next();
+});
+
+// Database connection middleware for API routes
+app.use(async (req, res, next) => {
+  // Health check and root endpoints do not block on DB connection
+  if (req.path === '/' || req.path === '/api/v1/health') {
+    return next();
+  }
+
+  if (mongoose.connection && mongoose.connection.readyState >= 1) {
+    return next();
+  }
+
+  try {
+    await connectDB();
+    next();
+  } catch (err) {
+    console.error('Error connecting to database during request:', err.message);
+    res.status(503).json({
+      success: false,
+      message: 'Database connection unavailable. Please try again in a moment.'
+    });
+  }
+});
+
+// Root welcome endpoint
+app.get('/', (req, res) => {
+  res.json({
+    status: 'OK',
+    message: 'Jaishree Colony Management API is running',
+    version: '1.0.0',
+    health: '/api/v1/health',
+    timestamp: new Date().toISOString()
+  });
+});
+
+// Health check endpoint
+app.get('/api/v1/health', (req, res) => {
+  const isConnected = mongoose.connection && mongoose.connection.readyState === 1;
+  res.json({
+    status: 'OK',
+    message: 'Jaishree Colony Management API is running',
+    timestamp: new Date().toISOString(),
+    environment: process.env.NODE_ENV || 'development',
+    mongoConnection: isConnected ? 'Connected' : 'Disconnected',
+    database: mongoose.connection ? mongoose.connection.name : null
+  });
 });
 
 // Routes
@@ -119,17 +176,6 @@ app.use('/api/v1/kisan-payments', require('./routes/kisanPaymentRoutes'));
 app.use('/api/v1/expenses', require('./routes/expenseRoutes'));
 app.use('/api/v1/contacts', require('./routes/contactRoutes'));
 
-// Health check endpoint
-app.get('/api/v1/health', (req, res) => {
-  res.json({
-    status: 'OK',
-    message: 'Jaishree Colony Management API is running',
-    timestamp: new Date().toISOString(),
-    environment: process.env.NODE_ENV,
-    mongoConnection: mongoose.connection.readyState === 1 ? 'Connected' : 'Disconnected'
-  });
-});
-
 // 404 handler
 app.use('*', (req, res) => {
   res.status(404).json({
@@ -142,11 +188,16 @@ app.use('*', (req, res) => {
 // Global error handler (must be last)
 app.use(errorHandler);
 
-const PORT = process.env.PORT || 5000;
+// Export app for Vercel serverless functions
+module.exports = app;
 
-app.listen(PORT, () => {
-  console.log(`\n🚀 Server running on port ${PORT}`);
-  console.log(`📍 API URL: http://localhost:${PORT}/api/v1`);
-  console.log(`🌍 Environment: ${process.env.NODE_ENV}`);
-  console.log(`⏰ Started at: ${new Date().toISOString()}\n`);
-});
+// Only start standalone listener when not running in Vercel serverless
+if (!process.env.VERCEL) {
+  const PORT = process.env.PORT || 5000;
+  app.listen(PORT, () => {
+    console.log(`\n🚀 Server running on port ${PORT}`);
+    console.log(`📍 API URL: http://localhost:${PORT}/api/v1`);
+    console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
+    console.log(`⏰ Started at: ${new Date().toISOString()}\n`);
+  });
+}
