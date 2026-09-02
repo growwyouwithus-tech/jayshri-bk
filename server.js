@@ -145,7 +145,10 @@ app.get('/', (req, res) => {
 });
 
 // Health check endpoint
-app.get('/api/v1/health', (req, res) => {
+app.get('/api/v1/health', async (req, res) => {
+  try {
+    await connectDB();
+  } catch (e) {}
   const isConnected = mongoose.connection && mongoose.connection.readyState === 1;
   res.json({
     status: 'OK',
